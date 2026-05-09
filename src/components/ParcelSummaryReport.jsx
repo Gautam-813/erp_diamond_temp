@@ -155,55 +155,7 @@ const ParcelSummaryReport = ({ parcel, tender, state, prices, totals }) => {
         </tbody>
       </table>
 
-      {/* 3. COLOUR & CLARITY PROFILES */}
-      <div className="grid-2-col" style={{marginTop:30}}>
-        <div>
-          <div className="section-title">COLOUR PROFILE (POL CTS)</div>
-          <table className="summary-table mini">
-            <thead>
-              <tr><th>Colour</th><th>Pol Cts</th><th>%</th></tr>
-            </thead>
-            <tbody>
-              {COLOUR_LIST.map(col => (
-                <tr key={col}>
-                  <td>{col}</td>
-                  <td>{formatNum(colorProfile[col], 2)}</td>
-                  <td>{totalPolCts > 0 ? ((colorProfile[col] / totalPolCts) * 100).toFixed(1) : 0}%</td>
-                </tr>
-              ))}
-              <tr className="total-row">
-                <td>TOTAL</td>
-                <td>{formatNum(totalPolCts, 2)}</td>
-                <td>100%</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        <div>
-          <div className="section-title">CLARITY PROFILE (POL CTS)</div>
-          <table className="summary-table mini">
-            <thead>
-              <tr><th>Clarity</th><th>Pol Cts</th><th>%</th></tr>
-            </thead>
-            <tbody>
-              {CLARITY_LIST.map(clr => (
-                <tr key={clr}>
-                  <td>{clr}</td>
-                  <td>{formatNum(clarityProfile[clr], 2)}</td>
-                  <td>{totalPolCts > 0 ? ((clarityProfile[clr] / totalPolCts) * 100).toFixed(1) : 0}%</td>
-                </tr>
-              ))}
-              <tr className="total-row">
-                <td>TOTAL</td>
-                <td>{formatNum(totalPolCts, 2)}</td>
-                <td>100%</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* 4. USABLE vs NON-USABLE */}
+      {/* 3. USABLE vs NON-USABLE */}
       <div className="section-title" style={{marginTop:30}}>USABLE vs NON-USABLE</div>
       <div className="info-banner">
         <b>Usable:</b> D–H colour / VVS or VS1 clarity. <b>Non-Usable:</b> I-JK colour or VS2 / SI1 / SI2 and below.
@@ -251,8 +203,8 @@ const ParcelSummaryReport = ({ parcel, tender, state, prices, totals }) => {
         </tbody>
       </table>
 
+      {/* 4. USABLE & NON-USABLE DETAIL (PCS) */}
       <div style={{display: 'flex', gap: 20, marginTop: 30}}>
-        {/* 4.5. USABLE DETAIL */}
         <div style={{flex: 1}}>
           <div className="section-title">USABLE DETAIL (PCS)</div>
           <table className="summary-table mini" style={{maxWidth: 300}}>
@@ -289,7 +241,6 @@ const ParcelSummaryReport = ({ parcel, tender, state, prices, totals }) => {
           </table>
         </div>
 
-        {/* 4.6. NON-USABLE DETAIL */}
         <div style={{flex: 1}}>
           <div className="section-title">NON-USABLE DETAIL (PCS)</div>
           <table className="summary-table mini" style={{maxWidth: 400}}>
@@ -333,7 +284,51 @@ const ParcelSummaryReport = ({ parcel, tender, state, prices, totals }) => {
         </div>
       </div>
 
-      {/* 5. BID SUMMARY */}
+      {/* 6. COLOUR PROFILE (POL CTS) */}
+      <div className="section-title" style={{marginTop:30}}>COLOUR PROFILE (POL CTS)</div>
+      <table className="summary-table mini">
+        <thead>
+          <tr><th>Colour</th><th>Pol Cts</th><th>%</th></tr>
+        </thead>
+        <tbody>
+          {COLOUR_LIST.map(col => (
+            <tr key={col}>
+              <td>{col}</td>
+              <td>{formatNum(colorProfile[col], 2)}</td>
+              <td>{totalPolCts > 0 ? ((colorProfile[col] / totalPolCts) * 100).toFixed(1) : 0}%</td>
+            </tr>
+          ))}
+          <tr className="total-row">
+            <td>TOTAL</td>
+            <td>{formatNum(totalPolCts, 2)}</td>
+            <td>100%</td>
+          </tr>
+        </tbody>
+      </table>
+
+      {/* 7. CLARITY PROFILE (POL CTS) */}
+      <div className="section-title" style={{marginTop:30}}>CLARITY PROFILE (POL CTS)</div>
+      <table className="summary-table mini">
+        <thead>
+          <tr><th>Clarity</th><th>Pol Cts</th><th>%</th></tr>
+        </thead>
+        <tbody>
+          {CLARITY_LIST.map(clr => (
+            <tr key={clr}>
+              <td>{clr}</td>
+              <td>{formatNum(clarityProfile[clr], 2)}</td>
+              <td>{totalPolCts > 0 ? ((clarityProfile[clr] / totalPolCts) * 100).toFixed(1) : 0}%</td>
+            </tr>
+          ))}
+          <tr className="total-row">
+            <td>TOTAL</td>
+            <td>{formatNum(totalPolCts, 2)}</td>
+            <td>100%</td>
+          </tr>
+        </tbody>
+      </table>
+
+      {/* 8. VALUATION BREAKDOWN */}
       <div className="section-title" style={{marginTop:30}}>VALUATION BREAKDOWN</div>
       <div className="bid-summary-grid">
          <div className="bid-item"><span>Total Polish Value</span><b>${formatNum(totalPolVal, 2)}</b></div>
@@ -344,7 +339,7 @@ const ParcelSummaryReport = ({ parcel, tender, state, prices, totals }) => {
          <div className="bid-item highlight"><span>Total Bid Amount</span><b>${formatNum(bidTotalAmount, 0)}</b></div>
       </div>
 
-      {/* 6. FLUORESCENCE PROFILE */}
+      {/* 9. FLUORESCENCE PROFILE */}
       <div className="section-title" style={{marginTop:30}}>FLUORESCENCE PROFILE (ROUGH CTS BASIS)</div>
       <table className="summary-table mini" style={{maxWidth:500}}>
          <thead><tr><th>Fluorescence</th><th>Rough Cts</th><th>% of Parcel</th></tr></thead>
