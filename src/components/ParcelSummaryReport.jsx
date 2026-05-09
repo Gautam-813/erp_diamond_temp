@@ -2,6 +2,57 @@ import React, { useState } from 'react';
 import { formatNum } from '../utils/calculations';
 import { COLOUR_LIST, CLARITY_LIST, MASTER_SIZE_CHART } from '../constants/diamondData';
 
+// Helper: Get MM Range based SOLELY on weight markers in the size chart
+const getMMByWeight = (weight, chart) => {
+  if (!chart || chart.length === 0 || weight <= 0) return "-";
+
+  // 1. Flatten all markers into a simple sorted list of {weight, mm}
+  const markers = [];
+  chart.forEach(row => {
+    const weights = row.weight.split(',').map(w => parseFloat(w.trim()));
+    const mms = row.mm.split(',').map(m => m.trim());
+    weights.forEach((w, idx) => {
+      if (!isNaN(w) && mms[idx]) {
+        markers.push({ weight: w, mm: mms[idx] });
+      }
+    });
+  });
+
+  if (markers.length === 0) return "-";
+  markers.sort((a, b) => a.weight - b.weight);
+
+  // 2. Find the "Sandwich" markers
+  let lower = null;
+  let upper = null;
+
+  for (let i = 0; i < markers.length; i++) {
+    if (markers[i].weight <= weight) {
+      lower = markers[i];
+    }
+    if (markers[i].weight >= weight) {
+      upper = markers[i];
+      break; // Found the first one above or equal
+    }
+  }
+
+  // Handle edge cases (target weight outside chart bounds)
+  if (!lower) lower = markers[0];
+  if (!upper) upper = markers[markers.length - 1];
+
+  // 3. Extract MM Start and MM End
+  const getMMBounds = (mmStr) => {
+    const nums = mmStr.match(/[\d.]+/g);
+    if (!nums || nums.length < 1) return { start: "?", end: "?" };
+    return { start: nums[0], end: nums[1] || nums[0] };
+  };
+
+  const lowerBounds = getMMBounds(lower.mm);
+  const upperBounds = getMMBounds(upper.mm);
+
+  if (lower === upper) return lower.mm;
+  return `${lowerBounds.start} - ${upperBounds.end} mm`;
+};
+
 const ParcelSummaryReport = ({ parcel, tender, state, prices, totals, onUpdate }) => {
   if (!state || !state.table || !totals) return <div className="p-20 text-center">No calculation data available for this parcel.</div>;
 
@@ -175,7 +226,9 @@ const ParcelSummaryReport = ({ parcel, tender, state, prices, totals, onUpdate }
             <th>Pol Pcs</th>
             <th>Pol Cts</th>
             <th>Yield</th>
+            <th>Avg Pol Sz (ct)</th>
             <th>Polish Sieve</th>
+            <th>Pol MM (Dia)</th>
             <th>Value US$</th>
           </tr>
         </thead>
@@ -184,6 +237,9 @@ const ParcelSummaryReport = ({ parcel, tender, state, prices, totals, onUpdate }
             const rData = rangeWise[r] || { pcs: 0, cts: 0, val: 0, roughCts: 0 };
             const sieveInfo = MASTER_SIZE_CHART.find(m => m.sieve.includes(r)) || { sieve: r };
             const rangeYield = rData.roughCts > 0 ? (rData.cts / rData.roughCts) * 100 : 0;
+            const avgPolSz = rData.pcs > 0 ? rData.cts / rData.pcs : 0;
+            const polMM = getMMByWeight(avgPolSz, MASTER_SIZE_CHART);
+
             return (
               <tr key={r}>
                 <td style={{fontWeight:700}}>{r}</td>
@@ -191,7 +247,9 @@ const ParcelSummaryReport = ({ parcel, tender, state, prices, totals, onUpdate }
                 <td>{formatNum(rData.pcs, 0)}</td>
                 <td>{formatNum(rData.cts, 2)}</td>
                 <td>{formatNum(rangeYield, 1)}%</td>
+                <td style={{fontWeight: 700, color: 'var(--text2)'}}>{formatNum(avgPolSz, 4)}</td>
                 <td style={{fontSize:11, opacity:0.8}}>{sieveInfo.sieve}</td>
+                <td style={{fontWeight: 700, color: 'var(--gold)'}}>{polMM}</td>
                 <td className="text-gold">${formatNum(rData.val, 0)}</td>
               </tr>
             );
@@ -202,6 +260,8 @@ const ParcelSummaryReport = ({ parcel, tender, state, prices, totals, onUpdate }
             <td>{formatNum(totalPolPcs, 0)}</td>
             <td>{formatNum(totalPolCts, 2)}</td>
             <td>{formatNum(avgYield, 1)}%</td>
+            <td>{totalPolPcs > 0 ? formatNum(totalPolCts / totalPolPcs, 4) : 0}</td>
+            <td>-</td>
             <td>-</td>
             <td className="text-gold">${formatNum(totalPolVal, 0)}</td>
           </tr>
