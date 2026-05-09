@@ -63,5 +63,7 @@ class TenderOut(TenderBase):
     owner_id: int
     created_at: datetime
     parcels: List[ParcelOut] = []
+    parcel_count: Optional[int] = 0
+    owner_email: Optional[str] = ""
     class Config:
         from_attributes = True

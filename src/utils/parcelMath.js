@@ -19,7 +19,7 @@ export const getPriceIdxByWeight = (w) => {
    return "r16"; // 1.00 - 1.49+
 };
 
-export const calculateParcelTotals = (state, parcel, globalPrices, COLOUR_LIST, CLARITY_LIST, isHotSize) => {
+export const calculateParcelTotals = (state, parcel, globalPrices, COLOUR_LIST, CLARITY_LIST, isHotSize, usableColourMax = 'H', usableClarityMin = 'VS1') => {
    if (!state || !state.table) return null;
 
    let totalPolCts = 0;
@@ -33,11 +33,34 @@ export const calculateParcelTotals = (state, parcel, globalPrices, COLOUR_LIST, 
    COLOUR_LIST.forEach(c => colorProfile[c] = 0);
    CLARITY_LIST.forEach(c => clarityProfile[c] = 0);
 
+   // Dynamic usable data structures based on thresholds
+   const usableColours = COLOUR_LIST.slice(0, COLOUR_LIST.indexOf(usableColourMax) + 1);
+   const usableClarities = CLARITY_LIST.slice(0, CLARITY_LIST.indexOf(usableClarityMin) + 1);
+   
+   const usablePcs = {};
+   const nonUsablePcs = {};
+   
+   // Initialize usablePcs for all colours that could be usable
+   usableColours.forEach(col => {
+      usablePcs[col] = {};
+      usableClarities.forEach(clr => {
+         usablePcs[col][clr] = 0;
+      });
+   });
+   
+   // Initialize nonUsablePcs for all colours that could be non-usable
+   COLOUR_LIST.filter(c => !usableColours.includes(c)).forEach(col => {
+      nonUsablePcs[col] = {};
+      CLARITY_LIST.forEach(clr => {
+         nonUsablePcs[col][clr] = 0;
+      });
+   });
+
    const usableData = {
       usableRough: 0, usablePol: 0, usableVal: 0,
       nonUsableRough: 0, nonUsablePol: 0, nonUsableVal: 0,
-      usablePcs: { DEF: { VVS: 0, VS1: 0 }, G: { VVS: 0, VS1: 0 }, H: { VVS: 0, VS1: 0 } },
-      nonUsablePcs: { I: { VS2: 0, SI1: 0, SI2: 0, I1: 0, I2: 0 }, J: { VS2: 0, SI1: 0, SI2: 0, I1: 0, I2: 0 }, K: { VS2: 0, SI1: 0, SI2: 0, I1: 0, I2: 0 } }
+      usablePcs,
+      nonUsablePcs
    };
 
    const clarityGroups = {
@@ -162,19 +185,23 @@ export const calculateParcelTotals = (state, parcel, globalPrices, COLOUR_LIST, 
                if (isHotSize && isHotSize(col, clr)) hotCts += polC;
 
                // Usable vs Non-Usable logic
-               const isUsable = ["DEF", "G", "H"].includes(col) && ["VVS", "VS1"].includes(clr);
-               const isNonUsable = ["I", "J", "K"].includes(col) && ["VS2", "SI1", "SI2", "I1", "I2"].includes(clr);
+               const usableColours = COLOUR_LIST.slice(0, COLOUR_LIST.indexOf(usableColourMax) + 1);
+               const usableClarities = CLARITY_LIST.slice(0, CLARITY_LIST.indexOf(usableClarityMin) + 1);
+               
+               const isUsable = usableColours.includes(col) && usableClarities.includes(clr);
                
                if (isUsable) {
                   usableData.usableRough += roughC;
                   usableData.usablePol += polC;
                   usableData.usableVal += val;
-                  if (usableData.usablePcs[col]) usableData.usablePcs[col][clr] += polP;
-               } else if (isNonUsable) {
+                  if (!usableData.usablePcs[col]) usableData.usablePcs[col] = {};
+                  usableData.usablePcs[col][clr] = (usableData.usablePcs[col][clr] || 0) + polP;
+               } else {
                   usableData.nonUsableRough += roughC;
                   usableData.nonUsablePol += polC;
                   usableData.nonUsableVal += val;
-                  if (usableData.nonUsablePcs[col]) usableData.nonUsablePcs[col][clr] += polP;
+                  if (!usableData.nonUsablePcs[col]) usableData.nonUsablePcs[col] = {};
+                  usableData.nonUsablePcs[col][clr] = (usableData.nonUsablePcs[col][clr] || 0) + polP;
                }
             });
          });

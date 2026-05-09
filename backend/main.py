@@ -359,12 +359,22 @@ def share_tender(tender_id: int, email: str, db: Session = Depends(get_db), curr
     db.commit()
     return {"status": "success", "message": f"Notebook shared with {email}"}
 
-# Update get_my_tenders to include SHARED notebooks
+# Update get_my_tenders - return ALL tenders (not filtered by user)
 @app.get("/tenders", response_model=List[schemas.TenderOut])
 def get_my_tenders(db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
-    owned = db.query(models.Tender).filter(models.Tender.owner_id == current_user.id).all()
-    shared = db.query(models.Tender).join(models.TenderShare).filter(models.TenderShare.user_id == current_user.id).all()
-    return owned + shared
+    return db.query(models.Tender).order_by(models.Tender.created_at.desc()).all()
+
+# Admin endpoint - view ALL tenders from all users
+@app.get("/tenders/all", response_model=List[schemas.TenderOut])
+def get_all_tenders(db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    tenders = db.query(models.Tender).order_by(models.Tender.created_at.desc()).all()
+    # Add parcel_count and owner_email to each tender
+    for t in tenders:
+        t.parcel_count = len(t.parcels) if t.parcels else 0
+        t.owner_email = t.owner.email if t.owner else ""
+    return tenders
 
 @app.post("/tenders", response_model=schemas.TenderOut)
 def create_tender(tender: schemas.TenderCreate, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):

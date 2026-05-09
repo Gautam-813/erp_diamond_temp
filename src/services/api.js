@@ -64,6 +64,11 @@ export const api = {
     return apiFetch(`${API_URL}/tenders`, { headers: getHeaders() });
   },
 
+  // Admin - get all tenders from all users
+  getAllTenders: async () => {
+    return apiFetch(`${API_URL}/tenders/all`, { headers: getHeaders() });
+  },
+
   createTender: async (tender) => {
     return apiFetch(`${API_URL}/tenders`, {
       method: "POST",

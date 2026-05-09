@@ -1,9 +1,35 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { formatNum } from '../utils/calculations';
 import { COLOUR_LIST, CLARITY_LIST, MASTER_SIZE_CHART } from '../constants/diamondData';
 
-const ParcelSummaryReport = ({ parcel, tender, state, prices, totals }) => {
+const ParcelSummaryReport = ({ parcel, tender, state, prices, totals, onUpdate }) => {
   if (!state || !state.table || !totals) return <div className="p-20 text-center">No calculation data available for this parcel.</div>;
+
+  const [localState, setLocalState] = useState({
+    usableColourMax: state.usableColourMax || 'H',
+    usableClarityMin: state.usableClarityMin || 'VS1'
+  });
+
+  const handleUsableChange = (key, value) => {
+    const newState = { ...localState, [key]: value };
+    setLocalState(newState);
+    if (onUpdate) {
+      onUpdate(key, value);
+    }
+  };
+
+  // Sync localState when state changes from outside (e.g., page load)
+  React.useEffect(() => {
+    if (state.usableColourMax && state.usableColourMax !== localState.usableColourMax) {
+      setLocalState(s => ({ ...s, usableColourMax: state.usableColourMax }));
+    }
+    if (state.usableClarityMin && state.usableClarityMin !== localState.usableClarityMin) {
+      setLocalState(s => ({ ...s, usableClarityMin: state.usableClarityMin }));
+    }
+  }, [state.usableColourMax, state.usableClarityMin]);
+
+  const usableColourOptions = ['DEF', 'G', 'H', 'I', 'J', 'K'];
+  const usableClarityOptions = ['VVS', 'VS1', 'VS2', 'SI1'];
 
   // Use the pre-calculated totals from Dashboard.jsx for consistency
   const { 
@@ -111,6 +137,33 @@ const ParcelSummaryReport = ({ parcel, tender, state, prices, totals }) => {
         </div>
       </div>
 
+      {/* USABLE SETTINGS */}
+      <div style={{display: 'flex', gap: 20, marginTop: 20, marginBottom: 20, padding: 15, background: 'var(--bg2)', borderRadius: 8}}>
+        <div>
+          <div style={{fontSize: 11, fontWeight: 700, marginBottom: 5}}>USABLE COLOUR (MAX)</div>
+          <select 
+            value={localState.usableColourMax} 
+            onChange={e => handleUsableChange('usableColourMax', e.target.value)}
+            style={{padding: '6px 10px', borderRadius: 4, border: '1px solid var(--border)', background: 'var(--card)', color: 'var(--text)', fontSize: 13}}
+          >
+            {usableColourOptions.map(c => <option key={c} value={c}>{c}</option>)}
+          </select>
+        </div>
+        <div>
+          <div style={{fontSize: 11, fontWeight: 700, marginBottom: 5}}>USABLE CLARITY (MIN)</div>
+          <select 
+            value={localState.usableClarityMin} 
+            onChange={e => handleUsableChange('usableClarityMin', e.target.value)}
+            style={{padding: '6px 10px', borderRadius: 4, border: '1px solid var(--border)', background: 'var(--card)', color: 'var(--text)', fontSize: 13}}
+          >
+            {usableClarityOptions.map(c => <option key={c} value={c}>{c}</option>)}
+          </select>
+        </div>
+        <div style={{flex: 1, fontSize: 11, opacity: 0.6, display: 'flex', alignItems: 'flex-end'}}>
+          Usable = {usableColourOptions.slice(0, usableColourOptions.indexOf(localState.usableColourMax) + 1).join(', ')} + {usableClarityOptions.slice(0, usableClarityOptions.indexOf(localState.usableClarityMin) + 1).join(', ')}
+        </div>
+      </div>
+
 
       {/* 2. SIEVE SUMMARY TABLE */}
       <div className="section-title">SIEVE-WISE / POLISH SIZE-WISE SUMMARY</div>
@@ -158,7 +211,7 @@ const ParcelSummaryReport = ({ parcel, tender, state, prices, totals }) => {
       {/* 3. USABLE vs NON-USABLE */}
       <div className="section-title" style={{marginTop:30}}>USABLE vs NON-USABLE</div>
       <div className="info-banner">
-        <b>Usable:</b> D–H colour / VVS or VS1 clarity. <b>Non-Usable:</b> I-JK colour or VS2 / SI1 / SI2 and below.
+        <b>Usable:</b> {localState.usableColourMax} & above / {localState.usableClarityMin} & above. <b>Non-Usable:</b> Rest.
       </div>
       <table className="summary-table">
         <thead>
@@ -174,7 +227,7 @@ const ParcelSummaryReport = ({ parcel, tender, state, prices, totals }) => {
         </thead>
         <tbody>
           <tr>
-            <td style={{fontWeight:700}}>Usable (D–H / VVS & VS1)</td>
+            <td style={{fontWeight:700}}>Usable ({localState.usableColourMax} & above / {localState.usableClarityMin} & above)</td>
             <td>{formatNum(usableData.usableRough, 2)}</td>
             <td>{formatNum(usableData.usablePol, 2)}</td>
             <td>${formatNum(usableData.usableVal, 0)}</td>
@@ -204,85 +257,88 @@ const ParcelSummaryReport = ({ parcel, tender, state, prices, totals }) => {
       </table>
 
       {/* 4. USABLE & NON-USABLE DETAIL (PCS) */}
+      {(() => {
+         const usableColours = usableColourOptions.slice(0, usableColourOptions.indexOf(localState.usableColourMax) + 1);
+         const usableClarities = usableClarityOptions.slice(0, usableClarityOptions.indexOf(localState.usableClarityMin) + 1);
+         const nonUsableColours = usableColourOptions.slice(usableColourOptions.indexOf(localState.usableColourMax) + 1);
+         
+         return (
       <div style={{display: 'flex', gap: 20, marginTop: 30}}>
-        <div style={{flex: 1}}>
-          <div className="section-title">USABLE DETAIL (PCS)</div>
-          <table className="summary-table mini" style={{maxWidth: 300}}>
-            <thead>
-              <tr><th>Color</th><th>VVS</th><th>VS1</th><th>Total</th><th>%</th></tr>
-            </thead>
-            <tbody>
-              {(() => {
-                const { usablePcs } = usableData;
-                const totalUsable = Object.values(usablePcs).reduce((s, c) => s + (c.VVS || 0) + (c.VS1 || 0), 0);
-                return Object.keys(usablePcs).map(col => {
-                  const rowTotal = (usablePcs[col].VVS || 0) + (usablePcs[col].VS1 || 0);
-                  const pct = totalUsable > 0 ? ((rowTotal / totalUsable) * 100).toFixed(1) : 0;
-                  return (
-                    <tr key={col}>
-                      <td>{col}</td>
-                      <td>{usablePcs[col].VVS || 0}</td>
-                      <td>{usablePcs[col].VS1 || 0}</td>
-                      <td>{rowTotal}</td>
-                      <td>{pct}%</td>
-                    </tr>
-                  );
-                }).concat(
-                  <tr className="total-row" key="total">
-                    <td>TOTAL</td>
-                    <td>{Object.values(usablePcs).reduce((s, c) => s + (c.VVS || 0), 0)}</td>
-                    <td>{Object.values(usablePcs).reduce((s, c) => s + (c.VS1 || 0), 0)}</td>
-                    <td>{Object.values(usablePcs).reduce((s, c) => s + (c.VVS || 0) + (c.VS1 || 0), 0)}</td>
-                    <td>100.0%</td>
-                  </tr>
-                );
-              })()}
-            </tbody>
-          </table>
-        </div>
+         <div style={{flex: 1}}>
+           <div className="section-title">USABLE DETAIL (PCS)</div>
+           <table className="summary-table mini" style={{maxWidth: 300}}>
+             <thead>
+               <tr><th>Color</th>{usableClarities.map(c => <th key={c}>{c}</th>)}<th>Total</th><th>%</th></tr>
+             </thead>
+             <tbody>
+               {(() => {
+                 const { usablePcs } = usableData;
+                 const totalUsable = usableColours.reduce((sum, col) => {
+                    return sum + usableClarities.reduce((s, clr) => s + (usablePcs[col]?.[clr] || 0), 0);
+                 }, 0);
+                 return usableColours.length > 0 ? usableColours.map(col => {
+                   const rowTotal = usableClarities.reduce((s, clr) => s + (usablePcs[col]?.[clr] || 0), 0);
+                   const pct = totalUsable > 0 ? ((rowTotal / totalUsable) * 100).toFixed(1) : 0;
+                   return (
+                     <tr key={col}>
+                       <td>{col}</td>
+                       {usableClarities.map(clr => <td key={clr}>{usablePcs[col]?.[clr] || 0}</td>)}
+                       <td>{rowTotal}</td>
+                       <td>{pct}%</td>
+                     </tr>
+                   );
+                 }).concat(
+                   <tr className="total-row" key="total">
+                     <td>TOTAL</td>
+                     {usableClarities.map(clr => <td key={clr}>{usableColours.reduce((s, c) => s + (usablePcs[c]?.[clr] || 0), 0)}</td>)}
+                     <td>{usableColours.reduce((sum, col) => sum + usableClarities.reduce((s, clr) => s + (usablePcs[col]?.[clr] || 0), 0), 0)}</td>
+                     <td>100.0%</td>
+                   </tr>
+                 ) : <tr><td colSpan={usableClarities.length + 3}>No data</td></tr>;
+               })()}
+             </tbody>
+           </table>
+         </div>
 
-        <div style={{flex: 1}}>
-          <div className="section-title">NON-USABLE DETAIL (PCS)</div>
-          <table className="summary-table mini" style={{maxWidth: 400}}>
-            <thead>
-              <tr><th>Color</th><th>VS2</th><th>SI1</th><th>SI2</th><th>I1</th><th>I2</th><th>Total</th><th>%</th></tr>
-            </thead>
-            <tbody>
-              {(() => {
-                const { nonUsablePcs } = usableData;
-                const totalNonUsable = Object.values(nonUsablePcs).reduce((s, c) => s + Object.values(c).reduce((t, v) => t + v, 0), 0);
-                return Object.keys(nonUsablePcs).map(col => {
-                  const rowTotal = Object.values(nonUsablePcs[col]).reduce((s, v) => s + v, 0);
-                  const pct = totalNonUsable > 0 ? ((rowTotal / totalNonUsable) * 100).toFixed(1) : 0;
-                  return (
-                    <tr key={col}>
-                      <td>{col}</td>
-                      <td>{nonUsablePcs[col].VS2 || 0}</td>
-                      <td>{nonUsablePcs[col].SI1 || 0}</td>
-                      <td>{nonUsablePcs[col].SI2 || 0}</td>
-                      <td>{nonUsablePcs[col].I1 || 0}</td>
-                      <td>{nonUsablePcs[col].I2 || 0}</td>
-                      <td>{rowTotal}</td>
-                      <td>{pct}%</td>
-                    </tr>
-                  );
-                }).concat(
-                  <tr className="total-row" key="total">
-                    <td>TOTAL</td>
-                    <td>{Object.values(nonUsablePcs).reduce((s, c) => s + (c.VS2 || 0), 0)}</td>
-                    <td>{Object.values(nonUsablePcs).reduce((s, c) => s + (c.SI1 || 0), 0)}</td>
-                    <td>{Object.values(nonUsablePcs).reduce((s, c) => s + (c.SI2 || 0), 0)}</td>
-                    <td>{Object.values(nonUsablePcs).reduce((s, c) => s + (c.I1 || 0), 0)}</td>
-                    <td>{Object.values(nonUsablePcs).reduce((s, c) => s + (c.I2 || 0), 0)}</td>
-                    <td>{Object.values(nonUsablePcs).reduce((s, c) => s + Object.values(c).reduce((t, v) => t + v, 0), 0)}</td>
-                    <td>100.0%</td>
-                  </tr>
-                );
-              })()}
-            </tbody>
-          </table>
-        </div>
-      </div>
+         <div style={{flex: 1}}>
+           <div className="section-title">NON-USABLE DETAIL (PCS)</div>
+           <table className="summary-table mini" style={{maxWidth: 400}}>
+             <thead>
+               <tr><th>Color</th>{usableClarityOptions.slice(usableClarityOptions.indexOf(localState.usableClarityMin) + 1).map(c => <th key={c}>{c}</th>)}<th>Total</th><th>%</th></tr>
+             </thead>
+             <tbody>
+               {(() => {
+                 const { nonUsablePcs } = usableData;
+                 const nonUsableClarities = usableClarityOptions.slice(usableClarityOptions.indexOf(localState.usableClarityMin) + 1);
+                 const totalNonUsable = nonUsableColours.reduce((sum, col) => {
+                    return sum + nonUsableClarities.reduce((s, clr) => s + (nonUsablePcs[col]?.[clr] || 0), 0);
+                 }, 0);
+                 return nonUsableColours.length > 0 ? nonUsableColours.map(col => {
+                   const rowTotal = nonUsableClarities.reduce((s, clr) => s + (nonUsablePcs[col]?.[clr] || 0), 0);
+                   const pct = totalNonUsable > 0 ? ((rowTotal / totalNonUsable) * 100).toFixed(1) : 0;
+                   return (
+                     <tr key={col}>
+                       <td>{col}</td>
+                       {nonUsableClarities.map(clr => <td key={clr}>{nonUsablePcs[col]?.[clr] || 0}</td>)}
+                       <td>{rowTotal}</td>
+                       <td>{pct}%</td>
+                     </tr>
+                   );
+                 }).concat(
+                   <tr className="total-row" key="total">
+                     <td>TOTAL</td>
+                     {nonUsableClarities.map(clr => <td key={clr}>{nonUsableColours.reduce((s, c) => s + (nonUsablePcs[c]?.[clr] || 0), 0)}</td>)}
+                     <td>{nonUsableColours.reduce((sum, col) => sum + nonUsableClarities.reduce((s, clr) => s + (nonUsablePcs[col]?.[clr] || 0), 0), 0)}</td>
+                     <td>100.0%</td>
+                   </tr>
+                 ) : <tr><td colSpan={nonUsableClarities.length + 3}>No data</td></tr>;
+               })()}
+             </tbody>
+           </table>
+         </div>
+</div>
+          );
+       })()}
 
       {/* 6. COLOUR PROFILE (POL CTS) */}
       <div className="section-title" style={{marginTop:30}}>COLOUR PROFILE (POL CTS)</div>

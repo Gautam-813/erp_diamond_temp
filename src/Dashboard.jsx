@@ -355,18 +355,20 @@ export default function Dashboard() {
                   <div className="section-hdr">
                      <h2>{activeTender.name} <span style={{ opacity: 0.3, fontSize: 14 }}>(ID: {activeTender.id})</span></h2>
                      <div style={{ display: 'flex', gap: 10 }}>
-                        <button className={`btn ${showTenderSummary ? 'btn-gold' : 'btn-outline'}`} onClick={() => {
-                           setShowTenderSummary(!showTenderSummary);
-                           if (!showTenderSummary) setShowParcelComparison(false); // Hide comparison when showing summary
-                        }}>
-                           {showTenderSummary ? '📊 Show List' : '📋 Notebook Summary'}
-                        </button>
-                        <button className={`btn ${showParcelComparison ? 'btn-blue' : 'btn-outline'}`} onClick={() => {
-                           setShowParcelComparison(!showParcelComparison);
-                           if (!showParcelComparison) setShowTenderSummary(false); // Hide summary when showing comparison
-                        }}>
-                           {showParcelComparison ? '📋 Show List' : '📊 Compare Parcels'}
-                        </button>
+                        {/* Notebook Summary feature hidden - keeping code for reference
+                         <button className={`btn ${showTenderSummary ? 'btn-gold' : 'btn-outline'}`} onClick={() => {
+                            setShowTenderSummary(!showTenderSummary);
+                            if (!showTenderSummary) setShowParcelComparison(false); // Hide comparison when showing summary
+                         }}>
+                            {showTenderSummary ? '📊 Show List' : '📋 Notebook Summary'}
+                         </button>
+                         */}
+                         <button className={`btn ${showParcelComparison ? 'btn-blue' : 'btn-outline'}`} onClick={() => {
+                            setShowParcelComparison(!showParcelComparison);
+                            if (!showParcelComparison) setShowTenderSummary(false); // Hide summary when showing comparison
+                         }}>
+                            {showParcelComparison ? '📋 Show List' : '📊 Compare Parcels'}
+                         </button>
                         {selectedParcels.length > 1 && (
                            <button className="btn btn-green" onClick={() => setView('compare')}>🔍 Compare Selected ({selectedParcels.length})</button>
                         )}
@@ -475,10 +477,17 @@ export default function Dashboard() {
                   tenders={tenders.filter(t => selectedTenders.includes(t.id))}
                   onBack={() => setView('home')}
                />
-            )}
-            {view === 'admin' && (
-               <AdminPanel onBack={() => setView('home')} />
-            )}
+)}
+             {view === 'admin' && (
+                <AdminPanel 
+                   onBack={() => setView('home')} 
+                   onOpenParcel={(tender, parcel) => {
+                      setActiveTender(tender);
+                      setActiveParcel(parcel);
+                      setView('calc');
+                   }}
+                />
+             )}
          </main>
       </div>
    );
@@ -1353,6 +1362,8 @@ function CalculationView({ tender, parcel, onBack, onUpdate, globalPrices, onUpd
       sampleWeight: 10,
       ranges: [],
       sizeChart: MASTER_SIZE_CHART,
+      usableColourMax: 'H',
+      usableClarityMin: 'VS1',
       ...parcel.calc_state
    };
    // Use parcel's saved prices if available, otherwise fallback to global prices
@@ -1427,8 +1438,8 @@ function CalculationView({ tender, parcel, onBack, onUpdate, globalPrices, onUpd
 
    // GRAND TOTALS ACROSS ALL TABLES
    const totals = useMemo(() => {
-      return calculateParcelTotals(state, parcelData, state.prices, COLOUR_LIST, CLARITY_LIST, isHotSize);
-   }, [state, state.prices, parcelData]);
+      return calculateParcelTotals(state, parcelData, state.prices, COLOUR_LIST, CLARITY_LIST, isHotSize, state.usableColourMax, state.usableClarityMin);
+   }, [state, state.prices, parcelData, state.usableColourMax, state.usableClarityMin]);
 
    const handleValueChange = (range, colour, clarity, field, val, shape) => {
       const newTable = { ...state.table };
@@ -1754,13 +1765,14 @@ function CalculationView({ tender, parcel, onBack, onUpdate, globalPrices, onUpd
                            });
                         }}>📄 Download PDF</button>
                      </div>
-                     <ParcelSummaryReport
-                        parcel={parcelData}
-                        tender={tenderData}
-                        state={state}
-                        prices={state.prices}
-                        totals={totals}
-                     />
+<ParcelSummaryReport
+                         parcel={parcelData}
+                         tender={tenderData}
+                         state={state}
+                         prices={state.prices}
+                         totals={totals}
+                         onUpdate={(key, value) => setState(s => ({ ...s, [key]: value }))}
+                      />
                   </div>
                )}
                {activeTab === 'size_chart' && (
