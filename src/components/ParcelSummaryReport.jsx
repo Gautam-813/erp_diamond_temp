@@ -150,6 +150,14 @@ const ParcelSummaryReport = ({ parcel, tender, state, prices, totals, onUpdate }
             <div className="val">{formatNum(totalRoughCts, 2)}</div>
           </div>
           <div className="stat-card">
+            <label>Polish Cts</label>
+            <div className="val text-gold">{formatNum(totalPolCts, 2)}</div>
+          </div>
+          <div className="stat-card">
+            <label>Yield (%)</label>
+            <div className="val text-gold">{formatNum(avgYield, 1)}%</div>
+          </div>
+          <div className="stat-card">
             <label>Rough Pcs</label>
             <div className="val">{formatNum(totalRoughPcs, 0)}</div>
           </div>
@@ -499,7 +507,7 @@ const ParcelSummaryReport = ({ parcel, tender, state, prices, totals, onUpdate }
         }
         .report-header-grid {
           display: grid;
-          grid-template-columns: repeat(5, 1fr);
+          grid-template-columns: repeat(6, 1fr);
           gap: 10px;
         }
         .stat-card {
