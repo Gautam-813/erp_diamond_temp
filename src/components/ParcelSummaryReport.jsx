@@ -271,7 +271,7 @@ const ParcelSummaryReport = ({ parcel, tender, state, prices, totals, onUpdate }
       {/* 3. USABLE vs NON-USABLE */}
       <div className="section-title" style={{marginTop:30}}>USABLE vs NON-USABLE</div>
       <div className="info-banner">
-        <b>Usable:</b> {localState.usableColourMax} & above / {localState.usableClarityMin} & above. <b>Non-Usable:</b> Rest.
+        <b>Usable:</b> {COLOUR_LIST[0]} to {localState.usableColourMax} / {CLARITY_LIST[0]} to {localState.usableClarityMin}. <b>Non-Usable:</b> {COLOUR_LIST[COLOUR_LIST.indexOf(localState.usableColourMax)+1]} to {COLOUR_LIST[5]} / {CLARITY_LIST[CLARITY_LIST.indexOf(localState.usableClarityMin)+1]} to {CLARITY_LIST[CLARITY_LIST.length-1]}.
       </div>
       <table className="summary-table">
         <thead>
@@ -287,7 +287,7 @@ const ParcelSummaryReport = ({ parcel, tender, state, prices, totals, onUpdate }
         </thead>
         <tbody>
           <tr>
-            <td style={{fontWeight:700}}>Usable ({localState.usableColourMax} & above / {localState.usableClarityMin} & above)</td>
+            <td style={{fontWeight:700}}>Usable ({COLOUR_LIST[0]} to {localState.usableColourMax} / {CLARITY_LIST[0]} to {localState.usableClarityMin})</td>
             <td>{formatNum(usableData.usableRough, 2)}</td>
             <td>{formatNum(usableData.usablePol, 2)}</td>
             <td>${formatNum(usableData.usableVal, 0)}</td>
@@ -296,7 +296,7 @@ const ParcelSummaryReport = ({ parcel, tender, state, prices, totals, onUpdate }
             <td>{totalPolVal > 0 ? ((usableData.usableVal / totalPolVal) * 100).toFixed(1) : 0}%</td>
           </tr>
           <tr>
-            <td style={{fontWeight:700}}>Non-Usable (I-JK / VS2 & below)</td>
+            <td style={{fontWeight:700}}>Non-Usable ({COLOUR_LIST[COLOUR_LIST.indexOf(localState.usableColourMax)+1]} to {COLOUR_LIST[5]} / {CLARITY_LIST[CLARITY_LIST.indexOf(localState.usableClarityMin)+1]} to {CLARITY_LIST[CLARITY_LIST.length-1]})</td>
             <td>{formatNum(usableData.nonUsableRough, 2)}</td>
             <td>{formatNum(usableData.nonUsablePol, 2)}</td>
             <td>${formatNum(usableData.nonUsableVal, 0)}</td>
