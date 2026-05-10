@@ -1018,17 +1018,10 @@ const PolishTable = ({ range, state, prices, onUpdateConfig, onGlobalUpdate, siz
                                     const polC = parseFloat(formatNum((roughC_sample * scaleFactorCts * cMult) * (perClarityYield / 100), 3).replace(/,/g, ''));
 
                                     const priceShape = shape === "Round" ? "Round" : "Fancy";
-                                    // Get the base price from prices data
-                                    const basePrice = prices?.[priceShape]?.[pIdx]?.[colour]?.[clarity] || 0;
-                                    // Store base price first
-                                    baseClarityPrices[clarity] = basePrice;
-                                    // Check if we should use previous clarity's BASE price
                                     const usePrevPriceCfg = isRound ? roundUsePrevPrice : fancyUsePrevPrice;
                                     const usePrev = usePrevPriceCfg?.[clarity];
-                                    // If usePrev is true, use the BASE price of previous clarity (not modified)
-                                    const price = (usePrev && cIdx > 0 && baseClarityPrices[CLARITY_LIST[cIdx - 1]])
-                                       ? baseClarityPrices[CLARITY_LIST[cIdx - 1]]
-                                       : basePrice;
+                                    const priceClarity = (usePrev && cIdx > 0) ? CLARITY_LIST[cIdx - 1] : clarity;
+                                    const price = prices?.[priceShape]?.[pIdx]?.[colour]?.[priceClarity] || 0;
 
                                     const totalVal = polC * price;
                                     rowP += polP; rowC += polC; rowV += totalVal;
