@@ -1,21 +1,21 @@
 import { formatNum } from './calculations';
 
 export const getPriceIdxByWeight = (w) => {
-   if (w < 0.005) return "r1";  // Next (r2) starts at 0.005
-   if (w < 0.009) return "r2";  // Next (r3) starts at 0.009
-   if (w < 0.022) return "r3";  // Next (r4) starts at 0.022
-   if (w < 0.052) return "r4";  // Next (r5) starts at 0.052
-   if (w < 0.078) return "r5";  // Next (r6) starts at 0.078
-   if (w < 0.116) return "r6";  // Next (r7) starts at 0.116
-   if (w < 0.159) return "r7";  // Next (r8) starts at 0.159
-   if (w < 0.190) return "r8";  // Next (r9) starts at 0.190
-   if (w < 0.230) return "r9";  // Next (r10) starts at 0.230
-   if (w < 0.300) return "r10"; // Next (r11) starts at 0.300
-   if (w < 0.400) return "r11"; // Next (r12) starts at 0.400
-   if (w < 0.500) return "r12"; // Next (r13) starts at 0.500
-   if (w < 0.700) return "r13"; // Next (r14) starts at 0.700
-   if (w < 0.900) return "r14"; // Next (r15) starts at 0.900
-   if (w < 1.000) return "r15"; // Next (r16) starts at 1.000
+   if (w <= 0.004) return "r1";
+   if (w <= 0.008) return "r2";
+   if (w <= 0.021) return "r3";
+   if (w <= 0.051) return "r4";
+   if (w <= 0.077) return "r5";
+   if (w <= 0.115) return "r6";
+   if (w <= 0.158) return "r7";
+   if (w <= 0.18) return "r8";
+   if (w <= 0.22) return "r9";
+   if (w <= 0.29) return "r10";
+   if (w <= 0.39) return "r11";
+   if (w <= 0.49) return "r12";
+   if (w <= 0.69) return "r13";
+   if (w <= 0.89) return "r14";
+   if (w <= 0.99) return "r15";
    return "r16"; // 1.00 - 1.49+
 };
 

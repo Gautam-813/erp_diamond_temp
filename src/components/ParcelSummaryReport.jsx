@@ -140,8 +140,8 @@ const ParcelSummaryReport = ({ parcel, tender, state, prices, totals, onUpdate }
       {/* 1. HEADER SUMMARY */}
       <div className="report-header-section">
         <div className="report-title-box">
-          <h1>{parcel.number || 'Lot 80'} — PARCEL PURCHASE SUMMARY</h1>
-          <p>{tender.name} · May 2026 · {parcel.name}</p>
+          <h1 style={{margin:0}}>{parcel.number || 'Lot 80'}</h1>
+          <p style={{margin:0}}>{parcel.name} | {tender.name}</p>
         </div>
 
         <div className="report-header-grid">
@@ -149,13 +149,13 @@ const ParcelSummaryReport = ({ parcel, tender, state, prices, totals, onUpdate }
             <label>Rough Cts</label>
             <div className="val">{formatNum(totalRoughCts, 2)}</div>
           </div>
-          <div className="stat-card highlighted">
+          <div className="stat-card">
             <label>Polish Cts</label>
-            <div className="val">{formatNum(totalPolCts, 2)}</div>
+            <div className="val text-gold">{formatNum(totalPolCts, 2)}</div>
           </div>
-          <div className="stat-card highlighted">
+          <div className="stat-card">
             <label>Yield (%)</label>
-            <div className="val">{formatNum(avgYield, 1)}%</div>
+            <div className="val text-gold">{formatNum(avgYield, 1)}%</div>
           </div>
           <div className="stat-card">
             <label>Rough Pcs</label>
@@ -167,25 +167,25 @@ const ParcelSummaryReport = ({ parcel, tender, state, prices, totals, onUpdate }
           </div>
           <div className="stat-card">
             <label>Total Polish $</label>
-            <div className="val">${formatNum(totalPolVal, 0)}</div>
+            <div className="val text-green">${formatNum(totalPolVal, 0)}</div>
           </div>
-          <div className="stat-card highlight-blue">
+          <div className="stat-card">
             <label>Per Ct (Pol)</label>
             <div className="val">${formatNum(perCtPol, 2)}</div>
           </div>
-          <div className="stat-card highlight-blue">
+          <div className="stat-card">
             <label>Labour</label>
             <div className="val">${formatNum(labourPerRoughCt, 2)}</div>
           </div>
           <div className="stat-card">
             <label>Rough Cost Per/CT</label>
-            <div className="val">${formatNum(roughCostPerCt, 2)}</div>
+            <div className="val text-gold">${formatNum(roughCostPerCt, 2)}</div>
           </div>
           <div className="stat-card">
-            <label>Profit ({profitPct}%)</label>
+            <label>Profit (${profitPct}%)</label>
             <div className="val">${formatNum(profitDollars, 2)}</div>
           </div>
-          <div className="stat-card highlight-blue">
+          <div className="stat-card">
             <label>Bid Per CT</label>
             <div className="val">${formatNum(bidPerCt, 2)}</div>
           </div>
@@ -197,132 +197,136 @@ const ParcelSummaryReport = ({ parcel, tender, state, prices, totals, onUpdate }
       </div>
 
       {/* USABLE SETTINGS */}
-      <div className="usable-settings-bar">
+      <div style={{display: 'flex', gap: 20, marginTop: 20, marginBottom: 20, padding: 15, background: '#f5f5f5', border: '1px solid #cccccc', borderRadius: 4}}>
         <div>
-          <label>USABLE COLOUR (MAX)</label>
+          <div style={{fontSize: 11, fontWeight: 700, marginBottom: 5}}>USABLE COLOUR (MAX)</div>
           <select 
-            className="ef-select-audit"
             value={localState.usableColourMax} 
             onChange={e => handleUsableChange('usableColourMax', e.target.value)}
+            style={{padding: '6px 10px', borderRadius: 4, border: '1px solid #cccccc', background: '#ffffff', color: '#000000', fontSize: 11}}
           >
             {usableColourOptions.map(c => <option key={c} value={c}>{c}</option>)}
           </select>
         </div>
         <div>
-          <label>USABLE CLARITY (MIN)</label>
+          <div style={{fontSize: 11, fontWeight: 700, marginBottom: 5}}>USABLE CLARITY (MIN)</div>
           <select 
-            className="ef-select-audit"
             value={localState.usableClarityMin} 
             onChange={e => handleUsableChange('usableClarityMin', e.target.value)}
+            style={{padding: '6px 10px', borderRadius: 4, border: '1px solid #cccccc', background: '#ffffff', color: '#000000', fontSize: 11}}
           >
             {usableClarityOptions.map(c => <option key={c} value={c}>{c}</option>)}
           </select>
         </div>
-        <div style={{flex: 1, fontSize: 10, color: '#666', fontStyle: 'italic', display: 'flex', alignItems: 'flex-end'}}>
-          * Calculation Logic: Usable = {usableColourOptions.slice(0, usableColourOptions.indexOf(localState.usableColourMax) + 1).join(', ')} + {usableClarityOptions.slice(0, usableClarityOptions.indexOf(localState.usableClarityMin) + 1).join(', ')}
+        <div style={{flex: 1, fontSize: 11, opacity: 0.6, display: 'flex', alignItems: 'flex-end'}}>
+          Usable = {usableColourOptions.slice(0, usableColourOptions.indexOf(localState.usableColourMax) + 1).join(', ')} + {usableClarityOptions.slice(0, usableClarityOptions.indexOf(localState.usableClarityMin) + 1).join(', ')}
         </div>
       </div>
 
 
       {/* 2. SIEVE SUMMARY TABLE */}
-      <div className="section-title">SIEVE-WISE / POLISH SIZE-WISE SUMMARY</div>
-      <table className="summary-table">
-        <thead>
-          <tr>
-            <th>Rough Sieve</th>
-            <th>Rough Cts</th>
-            <th>Pol Pcs</th>
-            <th>Pol Cts</th>
-            <th>Yield</th>
-            <th>Avg Pol Sz (ct)</th>
-            <th>Polish Sieve</th>
-            <th>Pol MM (Dia)</th>
-            <th>Value US$</th>
-          </tr>
-        </thead>
-        <tbody>
-          {ranges.map(r => {
-            const rData = rangeWise[r] || { pcs: 0, cts: 0, val: 0, roughCts: 0 };
-            const sieveInfo = MASTER_SIZE_CHART.find(m => m.sieve.includes(r)) || { sieve: r };
-            const rangeYield = rData.roughCts > 0 ? (rData.cts / rData.roughCts) * 100 : 0;
-            const avgPolSz = rData.pcs > 0 ? rData.cts / rData.pcs : 0;
-            const polMM = getMMByWeight(avgPolSz, MASTER_SIZE_CHART);
+      <div className="section">
+        <div className="section-title">SIEVE-WISE / POLISH SIZE-WISE SUMMARY</div>
+        <table className="summary-table">
+          <thead>
+            <tr>
+              <th>Rough Sieve</th>
+              <th>Rough Cts</th>
+              <th>Pol Pcs</th>
+              <th>Pol Cts</th>
+              <th>Yield</th>
+              <th>Avg Pol Sz (ct)</th>
+              <th>Polish Sieve</th>
+              <th>Pol MM (Dia)</th>
+              <th>Value US$</th>
+            </tr>
+          </thead>
+          <tbody>
+            {ranges.map(r => {
+              const rData = rangeWise[r] || { pcs: 0, cts: 0, val: 0, roughCts: 0 };
+              const sieveInfo = MASTER_SIZE_CHART.find(m => m.sieve.includes(r)) || { sieve: r };
+              const rangeYield = rData.roughCts > 0 ? (rData.cts / rData.roughCts) * 100 : 0;
+              const avgPolSz = rData.pcs > 0 ? rData.cts / rData.pcs : 0;
+              const polMM = getMMByWeight(avgPolSz, MASTER_SIZE_CHART);
 
-            return (
-              <tr key={r}>
-                <td className="metric-label">{r}</td>
-                <td>{formatNum(rData.roughCts, 2)}</td>
-                <td>{formatNum(rData.pcs, 0)}</td>
-                <td>{formatNum(rData.cts, 2)}</td>
-                <td>{formatNum(rangeYield, 1)}%</td>
-                <td style={{fontWeight: 'bold'}}>{formatNum(avgPolSz, 4)}</td>
-                <td style={{opacity: 0.8}}>{sieveInfo.sieve}</td>
-                <td style={{fontWeight: 'bold'}}>{polMM}</td>
-                <td style={{fontWeight: 'bold'}}>${formatNum(rData.val, 0)}</td>
-              </tr>
-            );
-          })}
-          <tr className="total-row">
-            <td>TOTAL</td>
-            <td>{formatNum(totalRoughCts, 2)}</td>
-            <td>{formatNum(totalPolPcs, 0)}</td>
-            <td>{formatNum(totalPolCts, 2)}</td>
-            <td>{formatNum(avgYield, 1)}%</td>
-            <td>{totalPolPcs > 0 ? formatNum(totalPolCts / totalPolPcs, 4) : 0}</td>
-            <td>-</td>
-            <td>-</td>
-            <td>${formatNum(totalPolVal, 0)}</td>
-          </tr>
-        </tbody>
-      </table>
+              return (
+                <tr key={r}>
+                  <td style={{fontWeight:700}}>{r}</td>
+                  <td>{formatNum(rData.roughCts, 2)}</td>
+                  <td>{formatNum(rData.pcs, 0)}</td>
+                  <td>{formatNum(rData.cts, 2)}</td>
+                  <td>{formatNum(rangeYield, 1)}%</td>
+                  <td style={{fontWeight: 700}}>{formatNum(avgPolSz, 4)}</td>
+                  <td style={{fontSize:11, opacity:0.8}}>{sieveInfo.sieve}</td>
+                  <td style={{fontWeight: 700}}>{polMM}</td>
+                  <td style={{fontWeight: 700}}>${formatNum(rData.val, 0)}</td>
+                </tr>
+              );
+            })}
+            <tr className="total-row">
+              <td>TOTAL</td>
+              <td>{formatNum(totalRoughCts, 2)}</td>
+              <td>{formatNum(totalPolPcs, 0)}</td>
+              <td>{formatNum(totalPolCts, 2)}</td>
+              <td>{formatNum(avgYield, 1)}%</td>
+              <td>{totalPolPcs > 0 ? formatNum(totalPolCts / totalPolPcs, 4) : 0}</td>
+              <td>-</td>
+              <td>-</td>
+              <td style={{fontWeight: 700}}>${formatNum(totalPolVal, 0)}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
 
       {/* 3. USABLE vs NON-USABLE */}
-      <div className="section-title" style={{marginTop:30}}>USABLE vs NON-USABLE</div>
-      <div className="info-banner">
-        <b>Usable:</b> {COLOUR_LIST[0]} to {localState.usableColourMax} / {CLARITY_LIST[0]} to {localState.usableClarityMin}. <b>Non-Usable:</b> {COLOUR_LIST[COLOUR_LIST.indexOf(localState.usableColourMax)+1]} to {COLOUR_LIST[5]} / {CLARITY_LIST[CLARITY_LIST.indexOf(localState.usableClarityMin)+1]} to {CLARITY_LIST[CLARITY_LIST.length-1]}.
+      <div className="section">
+        <div className="section-title">USABLE vs NON-USABLE</div>
+        <div className="info-banner">
+          <b>Usable:</b> {COLOUR_LIST[0]} to {localState.usableColourMax} / {CLARITY_LIST[0]} to {localState.usableClarityMin}. <b>Non-Usable:</b> {COLOUR_LIST[COLOUR_LIST.indexOf(localState.usableColourMax)+1]} to {COLOUR_LIST[5]} / {CLARITY_LIST[CLARITY_LIST.indexOf(localState.usableClarityMin)+1]} to {CLARITY_LIST[CLARITY_LIST.length-1]}.
+        </div>
+        <table className="summary-table">
+          <thead>
+            <tr>
+              <th>Category</th>
+              <th>Rough Cts</th>
+              <th>Pol Cts</th>
+              <th>Pol Value</th>
+              <th>Pol $/ct (rough)</th>
+              <th>% Pol Cts</th>
+              <th>% Pol Value</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style={{fontWeight:700}}>Usable ({COLOUR_LIST[0]} to {localState.usableColourMax} / {CLARITY_LIST[0]} to {localState.usableClarityMin})</td>
+              <td>{formatNum(usableData.usableRough, 2)}</td>
+              <td>{formatNum(usableData.usablePol, 2)}</td>
+              <td>${formatNum(usableData.usableVal, 0)}</td>
+              <td>${usableData.usableRough > 0 ? (usableData.usableVal / usableData.usableRough).toFixed(2) : 0}</td>
+              <td>{totalPolCts > 0 ? ((usableData.usablePol / totalPolCts) * 100).toFixed(1) : 0}%</td>
+              <td>{totalPolVal > 0 ? ((usableData.usableVal / totalPolVal) * 100).toFixed(1) : 0}%</td>
+            </tr>
+            <tr>
+              <td style={{fontWeight:700}}>Non-Usable ({COLOUR_LIST[COLOUR_LIST.indexOf(localState.usableColourMax)+1]} to {COLOUR_LIST[5]} / {CLARITY_LIST[CLARITY_LIST.indexOf(localState.usableClarityMin)+1]} to {CLARITY_LIST[CLARITY_LIST.length-1]})</td>
+              <td>{formatNum(usableData.nonUsableRough, 2)}</td>
+              <td>{formatNum(usableData.nonUsablePol, 2)}</td>
+              <td>${formatNum(usableData.nonUsableVal, 0)}</td>
+              <td>${usableData.nonUsableRough > 0 ? (usableData.nonUsableVal / usableData.nonUsableRough).toFixed(2) : 0}</td>
+              <td>{totalPolCts > 0 ? ((usableData.nonUsablePol / totalPolCts) * 100).toFixed(1) : 0}%</td>
+              <td>{totalPolVal > 0 ? ((usableData.nonUsableVal / totalPolVal) * 100).toFixed(1) : 0}%</td>
+            </tr>
+            <tr className="total-row">
+              <td>TOTAL</td>
+              <td>{formatNum(totalRoughCts, 2)}</td>
+              <td>{formatNum(totalPolCts, 2)}</td>
+              <td>${formatNum(totalPolVal, 0)}</td>
+              <td>${totalRoughCts > 0 ? (totalPolVal / totalRoughCts).toFixed(2) : 0}</td>
+              <td>100.0%</td>
+              <td>100.0%</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
-      <table className="summary-table">
-        <thead>
-          <tr>
-            <th>Category</th>
-            <th>Rough Cts</th>
-            <th>Pol Cts</th>
-            <th>Pol Value</th>
-            <th>Pol $/ct (rough)</th>
-            <th>% Pol Cts</th>
-            <th>% Pol Value</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td className="metric-label">Usable ({COLOUR_LIST[0]} to {localState.usableColourMax} / {CLARITY_LIST[0]} to {localState.usableClarityMin})</td>
-            <td>{formatNum(usableData.usableRough, 2)}</td>
-            <td>{formatNum(usableData.usablePol, 2)}</td>
-            <td>${formatNum(usableData.usableVal, 0)}</td>
-            <td>${usableData.usableRough > 0 ? (usableData.usableVal / usableData.usableRough).toFixed(2) : 0}</td>
-            <td>{totalPolCts > 0 ? ((usableData.usablePol / totalPolCts) * 100).toFixed(1) : 0}%</td>
-            <td>{totalPolVal > 0 ? ((usableData.usableVal / totalPolVal) * 100).toFixed(1) : 0}%</td>
-          </tr>
-          <tr>
-            <td className="metric-label">Non-Usable ({COLOUR_LIST[COLOUR_LIST.indexOf(localState.usableColourMax)+1]} to {COLOUR_LIST[5]} / {CLARITY_LIST[CLARITY_LIST.indexOf(localState.usableClarityMin)+1]} to {CLARITY_LIST[CLARITY_LIST.length-1]})</td>
-            <td>{formatNum(usableData.nonUsableRough, 2)}</td>
-            <td>{formatNum(usableData.nonUsablePol, 2)}</td>
-            <td>${formatNum(usableData.nonUsableVal, 0)}</td>
-            <td>${usableData.nonUsableRough > 0 ? (usableData.nonUsableVal / usableData.nonUsableRough).toFixed(2) : 0}</td>
-            <td>{totalPolCts > 0 ? ((usableData.nonUsablePol / totalPolCts) * 100).toFixed(1) : 0}%</td>
-            <td>{totalPolVal > 0 ? ((usableData.nonUsableVal / totalPolVal) * 100).toFixed(1) : 0}%</td>
-          </tr>
-          <tr className="total-row">
-            <td>TOTAL</td>
-            <td>{formatNum(totalRoughCts, 2)}</td>
-            <td>{formatNum(totalPolCts, 2)}</td>
-            <td>${formatNum(totalPolVal, 0)}</td>
-            <td>${totalRoughCts > 0 ? (totalPolVal / totalRoughCts).toFixed(2) : 0}</td>
-            <td>100.0%</td>
-            <td>100.0%</td>
-          </tr>
-        </tbody>
-      </table>
 
       {/* 4. USABLE & NON-USABLE DETAIL (PCS) */}
       {(() => {
@@ -331,9 +335,10 @@ const ParcelSummaryReport = ({ parcel, tender, state, prices, totals, onUpdate }
          const nonUsableColours = usableColourOptions.slice(usableColourOptions.indexOf(localState.usableColourMax) + 1);
          
          return (
-      <div style={{display: 'flex', gap: 20, marginTop: 30}}>
-         <div style={{flex: 1}}>
-           <div className="section-title">USABLE DETAIL (PCS)</div>
+      <div className="section">
+        <div style={{display: 'flex', gap: 20}}>
+           <div style={{flex: 1}}>
+             <div className="section-title">USABLE DETAIL (PCS)</div>
             <table className="summary-table mini" style={{maxWidth: 300}}>
               <thead>
                 <tr><th>Color</th>{usableClarities.map(c => <th key={c}>{c}</th>)}<th>Total</th><th>%</th></tr>
@@ -349,9 +354,9 @@ const ParcelSummaryReport = ({ parcel, tender, state, prices, totals, onUpdate }
                     const pct = totalUsable > 0 ? ((rowTotal / totalUsable) * 100).toFixed(1) : 0;
                     return (
                       <tr key={col}>
-                        <td className="metric-label">{col}</td>
+                        <td>{col}</td>
                         {usableClarities.map(clr => <td key={clr}>{usablePcs[col]?.[clr] || 0}</td>)}
-                        <td style={{fontWeight: 'bold'}}>{rowTotal}</td>
+                        <td>{rowTotal}</td>
                         <td>{pct}%</td>
                       </tr>
                     );
@@ -366,10 +371,10 @@ const ParcelSummaryReport = ({ parcel, tender, state, prices, totals, onUpdate }
                 })()}
               </tbody>
             </table>
-         </div>
+          </div>
 
-         <div style={{flex: 1}}>
-           <div className="section-title">NON-USABLE DETAIL (PCS)</div>
+          <div style={{flex: 1}}>
+            <div className="section-title">NON-USABLE DETAIL (PCS)</div>
             <table className="summary-table mini" style={{maxWidth: 400}}>
               <thead>
                 <tr><th>Color</th>{usableClarityOptions.slice(usableClarityOptions.indexOf(localState.usableClarityMin) + 1).map(c => <th key={c}>{c}</th>)}<th>Total</th><th>%</th></tr>
@@ -386,9 +391,9 @@ const ParcelSummaryReport = ({ parcel, tender, state, prices, totals, onUpdate }
                     const pct = totalNonUsable > 0 ? ((rowTotal / totalNonUsable) * 100).toFixed(1) : 0;
                     return (
                       <tr key={col}>
-                        <td className="metric-label">{col}</td>
+                        <td>{col}</td>
                         {nonUsableClarities.map(clr => <td key={clr}>{nonUsablePcs[col]?.[clr] || 0}</td>)}
-                        <td style={{fontWeight: 'bold'}}>{rowTotal}</td>
+                        <td>{rowTotal}</td>
                         <td>{pct}%</td>
                       </tr>
                     );
@@ -403,129 +408,121 @@ const ParcelSummaryReport = ({ parcel, tender, state, prices, totals, onUpdate }
                 })()}
               </tbody>
             </table>
-         </div>
-</div>
-          );
-       })()}
+          </div>
+        </div>
+      </div>
+           );
+        })()}
 
       {/* 6. COLOUR PROFILE (POL CTS) */}
-      <div className="section-title" style={{marginTop:30}}>COLOUR PROFILE (POL CTS)</div>
-      <table className="summary-table mini" style={{maxWidth: 300}}>
-        <thead>
-          <tr><th>Colour</th><th>Pol Cts</th><th>%</th></tr>
-        </thead>
-        <tbody>
-          {COLOUR_LIST.map(col => (
-            <tr key={col}>
-              <td className="metric-label">{col}</td>
-              <td>{formatNum(colorProfile[col], 2)}</td>
-              <td>{totalPolCts > 0 ? ((colorProfile[col] / totalPolCts) * 100).toFixed(1) : 0}%</td>
+      <div className="section">
+        <div className="section-title">COLOUR PROFILE (POL CTS)</div>
+        <table className="summary-table mini">
+          <thead>
+            <tr><th>Colour</th><th>Pol Cts</th><th>%</th></tr>
+          </thead>
+          <tbody>
+            {COLOUR_LIST.map(col => (
+              <tr key={col}>
+                <td>{col}</td>
+                <td>{formatNum(colorProfile[col], 2)}</td>
+                <td>{totalPolCts > 0 ? ((colorProfile[col] / totalPolCts) * 100).toFixed(1) : 0}%</td>
+              </tr>
+            ))}
+            <tr className="total-row">
+              <td>TOTAL</td>
+              <td>{formatNum(totalPolCts, 2)}</td>
+              <td>100%</td>
             </tr>
-          ))}
-          <tr className="total-row">
-            <td>TOTAL</td>
-            <td>{formatNum(totalPolCts, 2)}</td>
-            <td>100%</td>
-          </tr>
-        </tbody>
-      </table>
+          </tbody>
+        </table>
+      </div>
 
       {/* 7. CLARITY PROFILE (POL CTS) */}
-      <div className="section-title" style={{marginTop:30}}>CLARITY PROFILE (POL CTS)</div>
-      <table className="summary-table mini" style={{maxWidth: 300}}>
-        <thead>
-          <tr><th>Clarity</th><th>Pol Cts</th><th>%</th></tr>
-        </thead>
-        <tbody>
-          {CLARITY_LIST.map(clr => (
-            <tr key={clr}>
-              <td className="metric-label">{clr}</td>
-              <td>{formatNum(clarityProfile[clr], 2)}</td>
-              <td>{totalPolCts > 0 ? ((clarityProfile[clr] / totalPolCts) * 100).toFixed(1) : 0}%</td>
+      <div className="section">
+        <div className="section-title">CLARITY PROFILE (POL CTS)</div>
+        <table className="summary-table mini">
+          <thead>
+            <tr><th>Clarity</th><th>Pol Cts</th><th>%</th></tr>
+          </thead>
+          <tbody>
+            {CLARITY_LIST.map(clr => (
+              <tr key={clr}>
+                <td>{clr}</td>
+                <td>{formatNum(clarityProfile[clr], 2)}</td>
+                <td>{totalPolCts > 0 ? ((clarityProfile[clr] / totalPolCts) * 100).toFixed(1) : 0}%</td>
+              </tr>
+            ))}
+            <tr className="total-row">
+              <td>TOTAL</td>
+              <td>{formatNum(totalPolCts, 2)}</td>
+              <td>100%</td>
             </tr>
-          ))}
-          <tr className="total-row">
-            <td>TOTAL</td>
-            <td>{formatNum(totalPolCts, 2)}</td>
-            <td>100%</td>
-          </tr>
-        </tbody>
-      </table>
+          </tbody>
+        </table>
+      </div>
 
       {/* 8. VALUATION BREAKDOWN */}
-      <div className="section-title" style={{marginTop:30}}>VALUATION BREAKDOWN</div>
-      <div className="bid-summary-grid">
-         <div className="bid-item"><span>Total Polish Value</span><b>${formatNum(totalPolVal, 2)}</b></div>
-         <div className="bid-item"><span>Labour / Rough Ct</span><b>${formatNum(labourPerRoughCt, 2)}</b></div>
-         <div className="bid-item"><span>Rough Cost Per/CT (Pre-Profit)</span><b>${formatNum(roughCostPerCt, 2)}</b></div>
-         <div className="bid-item"><span>Profit Margin ({profitPct}%)</span><b>${formatNum(profitDollars, 2)}</b></div>
-         <div className="bid-item highlight"><span>Final Bid Per CT</span><b>${formatNum(bidPerCt, 2)}</b></div>
-         <div className="bid-item highlight"><span>Total Bid Amount</span><b>${formatNum(bidTotalAmount, 0)}</b></div>
+      <div className="section">
+        <div className="section-title">VALUATION BREAKDOWN</div>
+        <div className="bid-summary-grid">
+           <div className="bid-item"><span>Total Polish Value</span><b>${formatNum(totalPolVal, 2)}</b></div>
+           <div className="bid-item"><span>Labour / Rough Ct</span><b>${formatNum(labourPerRoughCt, 2)}</b></div>
+           <div className="bid-item"><span>Rough Cost Per/CT (Pre-Profit)</span><b>${formatNum(roughCostPerCt, 2)}</b></div>
+           <div className="bid-item"><span>Profit Margin ({profitPct}%)</span><b>${formatNum(profitDollars, 2)}</b></div>
+           <div className="bid-item highlight"><span>Final Bid Per CT</span><b>${formatNum(bidPerCt, 2)}</b></div>
+           <div className="bid-item highlight"><span>Total Bid Amount</span><b>${formatNum(bidTotalAmount, 0)}</b></div>
+        </div>
       </div>
 
       {/* 9. FLUORESCENCE PROFILE */}
-      <div className="section-title" style={{marginTop:30}}>FLUORESCENCE PROFILE (ROUGH CTS BASIS)</div>
-      <table className="summary-table mini" style={{maxWidth:500}}>
-         <thead><tr><th>Fluorescence</th><th>Rough Cts</th><th>% of Parcel</th></tr></thead>
-         <tbody>
-            {Object.entries(state.fluo || { "None": 100, "Fnt": 0, "Med/Stg": 0 }).map(([cat, pct]) => {
-               const cts = totalRoughCts * (parseFloat(pct) || 0) / 100;
-               return (
-                  <tr key={cat}>
-                     <td className="metric-label">{cat}</td>
-                     <td>{formatNum(cts, 2)}</td>
-                     <td>{formatNum(parseFloat(pct) || 0, 1)}%</td>
-                  </tr>
-               );
-            })}
-            <tr className="total-row">
-               <td>TOTAL</td>
-               <td>{formatNum(totalRoughCts, 2)}</td>
-               <td>100.0%</td>
-            </tr>
-         </tbody>
-      </table>
-
-      {/* FOOTER */}
-      <div className="footer-audit">
-          <div className="footer-left">
-              <span>Excellent Facets Pvt Ltd</span>
-              <span>|</span>
-              <span>{tender.name} Analysis</span>
-              <span>|</span>
-              <span>Confidential Report</span>
-          </div>
-          <div>Page 1 of 1</div>
+      <div className="section">
+        <div className="section-title">FLUORESCENCE PROFILE (ROUGH CTS BASIS)</div>
+        <table className="summary-table mini" style={{maxWidth:500}}>
+           <thead><tr><th>Fluorescence</th><th>Rough Cts</th><th>% of Parcel</th></tr></thead>
+           <tbody>
+              {Object.entries(state.fluo || { "None": 100, "Fnt": 0, "Med/Stg": 0 }).map(([cat, pct]) => {
+                 const cts = totalRoughCts * (parseFloat(pct) || 0) / 100;
+                 return (
+                    <tr key={cat}>
+                       <td>{cat}</td>
+                       <td>{formatNum(cts, 2)}</td>
+                       <td>{formatNum(parseFloat(pct) || 0, 1)}%</td>
+                    </tr>
+                 );
+              })}
+              <tr className="total-row">
+                 <td>TOTAL</td>
+                 <td>{formatNum(totalRoughCts, 2)}</td>
+                 <td>100.0%</td>
+              </tr>
+           </tbody>
+        </table>
       </div>
       <style jsx>{`
         .summary-report-container {
           background: #ffffff;
           color: #000000;
-          padding: 30px 40px;
+          padding: 30px 20px;
           font-family: Arial, sans-serif;
           max-width: 1300px;
           margin: 0 auto;
         }
-
         .report-header-section {
           margin-bottom: 30px;
           border-bottom: 1px solid #cccccc;
           padding-bottom: 15px;
         }
-
         .report-title-box h1 {
           font-size: 22px;
           font-weight: bold;
-          margin: 0 0 5px 0;
+          margin-bottom: 5px;
           color: #000000;
         }
-
         .report-title-box p {
           font-size: 11px;
           color: #666666;
-          margin: 0;
         }
-
         .report-header-grid {
           display: grid;
           grid-template-columns: repeat(6, 1fr);
@@ -534,83 +531,53 @@ const ParcelSummaryReport = ({ parcel, tender, state, prices, totals, onUpdate }
           border: 1px solid #cccccc;
           margin-top: 20px;
         }
-
         .stat-card {
-          text-align: left;
-          padding: 12px 15px;
+          text-align: center;
+          padding: 8px;
           background: #ffffff;
         }
-
         .stat-card label {
           display: block;
-          font-size: 10px;
+          font-size: 9px;
           text-transform: uppercase;
           font-weight: bold;
           color: #666666;
-          margin-bottom: 5px;
-          letter-spacing: 0.3px;
+          margin-bottom: 4px;
         }
-
         .stat-card .val {
-          font-size: 14px;
+          font-size: 13px;
           font-weight: bold;
           color: #000000;
         }
-
         .stat-card.highlighted {
-          background: #f1f5f9;
+          background: #000000;
         }
-
-        .stat-card.highlight-blue {
-          background: #f8fafc;
+        .stat-card.highlighted .val, .stat-card.highlighted label {
+          color: #ffffff;
         }
-
-        .usable-settings-bar {
-          display: flex;
-          gap: 30px;
-          margin: 20px 0 40px 0;
-          padding: 15px 20px;
-          background: #f5f5f5;
-          border: 1px solid #e0e0e0;
-          align-items: center;
-        }
-
-        .usable-settings-bar label {
-          font-size: 11px;
-          font-weight: bold;
-          color: #666666;
-          text-transform: uppercase;
-          margin-bottom: 5px;
-          display: block;
-        }
-
-        .ef-select-audit {
-          padding: 6px 10px;
-          border: 1px solid #cccccc;
-          background: #ffffff;
-          font-size: 12px;
-          font-weight: bold;
-        }
-
         .section-title {
           font-size: 11px;
           font-weight: bold;
           color: #666666;
           text-transform: uppercase;
           letter-spacing: 0.5px;
-          margin: 40px 0 12px 0;
+          margin-bottom: 12px;
           padding-top: 10px;
+          border-bottom: none;
         }
-
+        .section {
+          page-break-inside: avoid;
+          break-inside: avoid;
+          margin-bottom: 30px;
+        }
         .summary-table {
           width: 100%;
           border-collapse: collapse;
-          margin-bottom: 25px;
+          margin-bottom: 20px;
           font-size: 11px;
         }
-
         .summary-table th {
-          background-color: #000000;
+          background: #000000;
           color: #ffffff;
           font-size: 10px;
           font-weight: bold;
@@ -618,101 +585,60 @@ const ParcelSummaryReport = ({ parcel, tender, state, prices, totals, onUpdate }
           padding: 9px 8px;
           text-transform: uppercase;
           letter-spacing: 0.3px;
-          border: 1px solid #333333;
+          border: 1px solid #cccccc;
         }
-
         .summary-table td {
           padding: 9px 8px;
           font-size: 11px;
           border: 1px solid #e0e0e0;
           color: #000000;
         }
-
         .summary-table tr:nth-child(even) {
-          background-color: #f8f8f8;
+          background-color: #f5f5f5;
         }
-
-        .metric-label {
-          font-weight: 600;
-          color: #000000;
-        }
-
         .total-row {
-          background-color: #f1f5f9 !important;
+          background-color: #f5f5f5 !important;
           font-weight: bold;
         }
-
         .total-row td {
-          border-top: 2px solid #333333;
+          border-top: 2px solid #cccccc;
         }
-
-        .info-banner {
-          background: #f9fafb;
-          border: 1px solid #e5e7eb;
-          padding: 10px 15px;
-          font-size: 11px;
-          margin-bottom: 15px;
-          color: #4b5563;
-        }
-
         .bid-summary-grid {
           display: grid;
           grid-template-columns: 1fr 1fr;
+          gap: 0;
           border: 1px solid #cccccc;
+          page-break-inside: avoid;
         }
-
         .bid-item {
           display: flex;
           justify-content: space-between;
-          padding: 12px 20px;
+          padding: 9px 15px;
           border-bottom: 1px solid #e0e0e0;
           border-right: 1px solid #e0e0e0;
-          font-size: 13px;
+          font-size: 11px;
           color: #000000;
         }
-
-        .bid-item span {
-          color: #666666;
-          font-weight: normal;
+        .bid-item:nth-child(even) {
+          background-color: #f5f5f5;
         }
-
-        .bid-item b {
+        .bid-item.highlight {
           font-weight: bold;
         }
-
-        .bid-item.highlight {
-          background: #f5f5f5;
-        }
-
-        .footer-audit {
-          margin-top: 50px;
-          padding-top: 15px;
-          border-top: 1px solid #cccccc;
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          font-size: 10px;
-          color: #666666;
-        }
-
-        .footer-left {
-          display: flex;
-          gap: 15px;
-        }
+        .bid-item span { color: #666666; }
+        .bid-item b { font-weight: bold; color: #000000; }
 
         @media print {
+          body {
+            background: #ffffff !important;
+          }
           .summary-report-container {
-            width: 210mm;
-            padding: 10mm !important;
-            margin: 0;
+            padding: 0 !important;
+            width: 100% !important;
+            max-width: none !important;
           }
-          .summary-table, .stat-card, .section-title, .bid-summary-grid, .info-banner {
-            break-inside: avoid;
-          }
-          .summary-table th {
-            background-color: #000000 !important;
-            color: #ffffff !important;
-            -webkit-print-color-adjust: exact;
+          .summary-table, .bid-summary-grid {
+            page-break-inside: avoid !important;
           }
         }
       `}</style>
