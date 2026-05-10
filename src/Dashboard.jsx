@@ -18,6 +18,7 @@ import TenderSummaryReport from './components/TenderSummaryReport';
 import ParcelComparisonReport from './components/ParcelComparisonReport';
 import TenderComparisonReport from './components/TenderComparisonReport';
 import { calculateParcelTotals, getPriceIdxByWeight } from './utils/parcelMath';
+import html2pdf from 'html2pdf.js';
 
 
 // Helper: Get MM Range based SOLELY on weight markers in the size chart
@@ -1753,9 +1754,7 @@ function CalculationView({ tender, parcel, onBack, onUpdate, globalPrices, onUpd
                               html2canvas: { scale: 2, useCORS: true },
                               jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
                            };
-                           import('html2pdf.js').then(html2pdf => {
-                              html2pdf.default().set(opt).from(element).save();
-                           });
+                           html2pdf().set(opt).from(element).save();
                         }}>📄 Download PDF</button>
                      </div>
 <ParcelSummaryReport

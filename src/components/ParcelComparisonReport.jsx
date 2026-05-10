@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { formatNum } from '../utils/calculations';
-import { getPriceIdxByWeight } from '../utils/priceUtils';
+import { calculateParcelTotals, getPriceIdxByWeight } from '../utils/parcelMath';
 import { COLOUR_LIST, CLARITY_LIST, SIEVE_RANGES, MASTER_SIZE_CHART, isHotSize } from '../constants/diamondData';
-import { calculateParcelTotals } from '../utils/parcelMath';
+import html2pdf from 'html2pdf.js';
 
 const ParcelComparisonReport = ({ parcels, tender, prices, onBack }) => {
   const [selectedParcels, setSelectedParcels] = useState([]);
