@@ -3,54 +3,81 @@ export const COLOUR_LIST = ["DEF", "G", "H", "I", "J", "K", "L", "M", "CAPE"];
 export const CLARITY_LIST = ["VVS", "VS1", "VS2", "SI1", "SI2", "I1", "I2"];
 
 export const SIEVE_RANGES = {
-  // Mapping of physical sieves to Excel Price Ranges
+  // Mapping of physical sieves to Excel Price Ranges (Now 22 ranges)
+  
   // Range 1: 0.002-0.004
   "+000 / -0": { priceIdx: "r1" }, "+0 / -1": { priceIdx: "r1" }, 
   
-  // Range 2: 0.005-0.008
-  "+1 / -1.5": { priceIdx: "r2" }, "+1.5 / -2": { priceIdx: "r2" },
+  // Range 2: 0.005-0.007
+  "+1 / -1.5": { priceIdx: "r2" }, 
   
-  // Range 3: 0.009-0.021
-  "+2": { priceIdx: "r3" }, "+2.5": { priceIdx: "r3" }, "+3": { priceIdx: "r3" }, "+3.5": { priceIdx: "r3" }, "+4": { priceIdx: "r3" },
-  "+4.5 / -5": { priceIdx: "r3" }, "+5 / -5.5": { priceIdx: "r3" }, "+5.5 / -6": { priceIdx: "r3" }, "+6 / -6.5": { priceIdx: "r3" },
+  // Range 3: 0.008-0.018
+  "+1.5 / -2": { priceIdx: "r3" }, "+2": { priceIdx: "r3" }, "+2.5": { priceIdx: "r3" }, "+3": { priceIdx: "r3" }, 
+  "+3.5": { priceIdx: "r3" }, "+4": { priceIdx: "r3" }, "+4.5 / -5": { priceIdx: "r3" }, "+5 / -5.5": { priceIdx: "r3" }, 
+  "+5.5 / -6": { priceIdx: "r3" }, "+6": { priceIdx: "r3" },
   
-  // Range 4: 0.022-0.051
-  "+6.5 / -7": { priceIdx: "r4" }, "+7": { priceIdx: "r4" }, "+7.5 / -8": { priceIdx: "r4" }, "+8": { priceIdx: "r4" },
-  "+8.5 / -9": { priceIdx: "r4" },
+  // Range 4: 0.021-0.029
+  "+6.5 / -7": { priceIdx: "r4" }, "+7": { priceIdx: "r4" },
+  
+  // Range 5: 0.030-0.039
+  "+7.5 / -8": { priceIdx: "r5" }, "+8": { priceIdx: "r5" },
 
-  // Range 5: 0.052-0.077
-  "+9": { priceIdx: "r5" }, "+9.5 / -10": { priceIdx: "r5" }, "+10 / -10.5": { priceIdx: "r5" },
+  // Range 6: 0.040-0.044
+  "+8.5 / -9": { priceIdx: "r6" },
 
-  // Range 6: 0.078-0.115
-  "+10.5 / -11": { priceIdx: "r6" }, "+11": { priceIdx: "r6" }, "+11.5 / -12": { priceIdx: "r6" },
+  // Range 7: 0.045-0.051
+  // (Intermediate - no specific sieve chart match, but available for manual input)
 
-  // Range 7: 0.116-0.158
-  "+12": { priceIdx: "r7" }, "+12.5 / -13": { priceIdx: "r7" }, "+13": { priceIdx: "r7" }, 
-  "+13.5": { priceIdx: "r7" }, "+14": { priceIdx: "r7" }, "+14.5": { priceIdx: "r7" },
+  // Range 8: 0.052-0.058
+  "+9": { priceIdx: "r8" }, "+9.5 / -10": { priceIdx: "r8" }, 
 
-  // Range 8: 0.159-0.200
-  "+15": { priceIdx: "r8" }, "+15.5": { priceIdx: "r8" }, "+16": { priceIdx: "r8" },
-  "-17": { priceIdx: "r8" }, "-18 / +19": { priceIdx: "r9" }, "-19 / +20": { priceIdx: "r10" }, 
-  "3Gr": { priceIdx: "r11" }
+  // Range 9: 0.059-0.069
+  "+10 / -10.5": { priceIdx: "r9" },
+
+  // Range 10: 0.070-0.078
+  "+10.5 / -11": { priceIdx: "r10" }, "+11 / -11.5": { priceIdx: "r10" },
+
+  // Range 11: 0.079-0.095
+  "+11.5 / -12": { priceIdx: "r11" }, "+12 / -12.5": { priceIdx: "r11" },
+
+  // Range 12: 0.10-0.125
+  "+12.5 / -13": { priceIdx: "r12" }, "+13": { priceIdx: "r12" }, "+13.5": { priceIdx: "r12" },
+
+  // Range 13: 0.126-0.159
+  "+14": { priceIdx: "r13" }, "+14.5": { priceIdx: "r13" }, "+15": { priceIdx: "r13" },
+
+  // Range 14: 0.16-0.18
+  "+15.5": { priceIdx: "r14" }, "+16": { priceIdx: "r14" }, "-17": { priceIdx: "r14" },
+
+  // Range 15-22: Pointers and Carats
+  "-18 / +19": { priceIdx: "r15" }, 
+  "-19 / +20": { priceIdx: "r16" }, 
+  "3Gr": { priceIdx: "r17" }
 };
 
 export const PRICE_SIEVES = [
   { id: "r1", label: "0.002-0.004" },
-  { id: "r2", label: "0.005-0.008" },
-  { id: "r3", label: "0.009-0.021" },
-  { id: "r4", label: "0.022-0.051" },
-  { id: "r5", label: "0.052-0.077" },
-  { id: "r6", label: "0.078-0.115" },
-  { id: "r7", label: "0.116-0.158" },
-  { id: "r8", label: "0.159-0.18" },
-  { id: "r9", label: "0.19-0.22" },
-  { id: "r10", label: "0.23-0.29" },
-  { id: "r11", label: "0.30-0.39" },
-  { id: "r12", label: "0.40-0.49" },
-  { id: "r13", label: "0.50-0.69" },
-  { id: "r14", label: "0.70-0.89" },
-  { id: "r15", label: "0.90-0.99" },
-  { id: "r16", label: "1.00-1.49" }
+  { id: "r2", label: "0.005-0.007" },
+  { id: "r3", label: "0.008-0.018" },
+  { id: "r4", label: "0.021-0.029" },
+  { id: "r5", label: "0.030-0.039" },
+  { id: "r6", label: "0.040-0.044" },
+  { id: "r7", label: "0.045-0.051" },
+  { id: "r8", label: "0.052-0.058" },
+  { id: "r9", label: "0.059-0.069" },
+  { id: "r10", label: "0.070-0.078" },
+  { id: "r11", label: "0.079-0.095" },
+  { id: "r12", label: "0.10-0.125" },
+  { id: "r13", label: "0.126-0.159" },
+  { id: "r14", label: "0.16-0.18" },
+  { id: "r15", label: "0.19-0.22" },
+  { id: "r16", label: "0.23-0.29" },
+  { id: "r17", label: "0.30-0.39" },
+  { id: "r18", label: "0.40-0.49" },
+  { id: "r19", label: "0.50-0.69" },
+  { id: "r20", label: "0.70-0.89" },
+  { id: "r21", label: "0.90-0.99" },
+  { id: "r22", label: "1.00-1.49" }
 ];
 
 export const MASTER_SIZE_CHART = [

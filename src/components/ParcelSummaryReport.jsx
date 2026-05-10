@@ -280,59 +280,122 @@ const ParcelSummaryReport = ({ parcel, tender, state, prices, totals, onUpdate }
 
       {/* 2.5 CLARITY BREAKDOWN BY SHAPE & CATEGORY */}
       <div className="section">
-        <div style={{display: 'flex', gap: 20}}>
+        <div style={{display: 'flex', flexDirection: 'column', gap: 30}}>
           {['Round', 'Fancy'].map(shape => {
             const scp = usableData.shapeClarityCategoryProfile?.[shape] || {};
             const availableRanges = ranges.filter(r => Object.keys(scp).includes(r));
-            
             if (availableRanges.length === 0) return null;
 
-            return (
-              <div key={shape} style={{flex: 1}}>
-                <div className="section-title">{shape.toUpperCase()} POLISH DETAIL (CLARITY-WISE)</div>
-                <table className="summary-table mini">
-                  <thead>
-                    <tr>
-                      <th>Clarity</th>
-                      {availableRanges.map(r => <th key={r}>{r}<br/><small>(CTS/Pcs)</small></th>)}
-                      <th>Total</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {CLARITY_LIST.map(clr => {
-                      const rowTotalCts = availableRanges.reduce((sum, r) => sum + (scp[r]?.[clr]?.cts || 0), 0);
-                      const rowTotalPcs = availableRanges.reduce((sum, r) => sum + (scp[r]?.[clr]?.pcs || 0), 0);
-                      
-                      if (rowTotalCts === 0) return null;
+            // Define Clarity Groups
+            const groups = [
+              { label: 'VVS-VS2', clarities: ['VVS', 'VS1', 'VS2'] },
+              { label: 'SI1-I2', clarities: ['SI1', 'SI2', 'I1', 'I2'] }
+            ];
 
-                      return (
-                        <tr key={clr}>
-                          <td style={{fontWeight: 700}}>{clr}</td>
-                          {availableRanges.map(r => (
-                            <td key={r}>
-                              {formatNum(scp[r]?.[clr]?.cts || 0, 2)} / {formatNum(scp[r]?.[clr]?.pcs || 0, 0)}
+            // Local logic to calculate avg size for a specific shape and clarity group
+            const getGroupAvgSize = (targetClarities) => {
+              let totalCts = 0;
+              let totalPcs = 0;
+              
+              ranges.forEach(r => {
+                const rangeCfg = state.rangeConfig?.[r] || {};
+                const selectedShapes = rangeCfg.selectedShapes || ["Round"];
+                const clarityMultipliers = rangeCfg.clarityMultipliers || {};
+                const scaleFactorCts = (parseFloat(state.sizeProfile?.[r]?.cts) || 0) / (parseFloat(state.sampleConfig?.[r]?.cts) || 1);
+                const scaleFactorPcs = (Math.round((parseFloat(state.sizeProfile?.[r]?.cts) || 0) / (parseFloat(state.sizeProfile?.[r]?.avg) || 1))) / (parseFloat(state.sampleConfig?.[r]?.pcs) || 1);
+                
+                const isCategoryRound = shape === "Round";
+                const roundYield = parseFloat(rangeCfg.roundYield) || 44;
+                const fancyYield = parseFloat(rangeCfg.fancyYield) || 40;
+                const roundMultiplier = parseFloat(rangeCfg.roundMultiplier) || 1;
+                const fancyMultiplier = parseFloat(rangeCfg.fancyMultiplier) || 1.5;
+
+                // Identify which specific shapes to scan for this category
+                const shapesToScan = isCategoryRound ? ["Round"] : selectedShapes.filter(s => s !== "Round");
+
+                shapesToScan.forEach(sName => {
+                  COLOUR_LIST.forEach(colour => {
+                    targetClarities.forEach(clarity => {
+                      const rCts = parseFloat(state.table?.[r]?.[colour]?.[sName]?.[clarity]?.cts) || 0;
+                      const rPcs = parseFloat(state.table?.[r]?.[colour]?.[sName]?.[clarity]?.pcs) || 0;
+                      if (rCts > 0) {
+                        const cMult = parseFloat(clarityMultipliers[clarity]) || 1;
+                        const yieldVal = isCategoryRound 
+                          ? (parseFloat(rangeCfg.roundYieldByClarity?.[clarity]) || roundYield)
+                          : (parseFloat(rangeCfg.fancyYieldByClarity?.[clarity]) || fancyYield);
+                        const multVal = isCategoryRound
+                          ? (parseFloat(rangeCfg.roundMultiplierByClarity?.[clarity]) || roundMultiplier)
+                          : (parseFloat(rangeCfg.fancyMultiplierByClarity?.[clarity]) || fancyMultiplier);
+
+                        totalCts += (rCts * scaleFactorCts * cMult) * (yieldVal / 100);
+                        totalPcs += Math.round((rPcs * scaleFactorPcs * cMult) * multVal);
+                      }
+                    });
+                  });
+                });
+              });
+              return totalPcs > 0 ? totalCts / totalPcs : 0;
+            };
+
+            return (
+              <div key={shape} style={{display: 'flex', gap: 20}}>
+                {groups.map(group => {
+                  const groupAvg = getGroupAvgSize(group.clarities);
+                  const groupTotalCts = availableRanges.reduce((sum, r) => sum + group.clarities.reduce((s, clr) => s + (scp[r]?.[clr]?.cts || 0), 0), 0);
+                  
+                  if (groupTotalCts === 0) return null;
+
+                  return (
+                    <div key={group.label} style={{flex: 1}}>
+                      <div className="section-title">
+                        {shape.toUpperCase()} POLISH DETAIL ({group.label}): {formatNum(groupAvg, 3)}
+                      </div>
+                      <table className="summary-table mini">
+                        <thead>
+                          <tr>
+                            <th>Clarity</th>
+                            {availableRanges.map(r => <th key={r}>{r}<br/><small>(CTS/Pcs)</small></th>)}
+                            <th>Total</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {group.clarities.map(clr => {
+                            const rowTotalCts = availableRanges.reduce((sum, r) => sum + (scp[r]?.[clr]?.cts || 0), 0);
+                            const rowTotalPcs = availableRanges.reduce((sum, r) => sum + (scp[r]?.[clr]?.pcs || 0), 0);
+                            
+                            if (rowTotalCts === 0) return null;
+
+                            return (
+                              <tr key={clr}>
+                                <td style={{fontWeight: 700}}>{clr}</td>
+                                {availableRanges.map(r => (
+                                  <td key={r}>
+                                    {formatNum(scp[r]?.[clr]?.cts || 0, 2)} / {formatNum(scp[r]?.[clr]?.pcs || 0, 0)}
+                                  </td>
+                                ))}
+                                <td style={{fontWeight: 700, backgroundColor: '#f5f5f5'}}>
+                                  {formatNum(rowTotalCts, 2)} / {formatNum(rowTotalPcs, 0)}
+                                </td>
+                              </tr>
+                            );
+                          })}
+                          <tr className="total-row">
+                            <td>TOTAL</td>
+                            {availableRanges.map(r => {
+                              const colTotalCts = group.clarities.reduce((sum, clr) => sum + (scp[r]?.[clr]?.cts || 0), 0);
+                              const colTotalPcs = group.clarities.reduce((sum, clr) => sum + (scp[r]?.[clr]?.pcs || 0), 0);
+                              return <td key={r}>{formatNum(colTotalCts, 2)} / {formatNum(colTotalPcs, 0)}</td>;
+                            })}
+                            <td>
+                              {formatNum(groupTotalCts, 2)} / 
+                              {formatNum(availableRanges.reduce((sum, r) => sum + group.clarities.reduce((s, clr) => s + (scp[r]?.[clr]?.pcs || 0), 0), 0), 0)}
                             </td>
-                          ))}
-                          <td style={{fontWeight: 700, backgroundColor: '#f5f5f5'}}>
-                            {formatNum(rowTotalCts, 2)} / {formatNum(rowTotalPcs, 0)}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                    <tr className="total-row">
-                      <td>TOTAL</td>
-                      {availableRanges.map(r => {
-                        const colTotalCts = CLARITY_LIST.reduce((sum, clr) => sum + (scp[r]?.[clr]?.cts || 0), 0);
-                        const colTotalPcs = CLARITY_LIST.reduce((sum, clr) => sum + (scp[r]?.[clr]?.pcs || 0), 0);
-                        return <td key={r}>{formatNum(colTotalCts, 2)} / {formatNum(colTotalPcs, 0)}</td>;
-                      })}
-                      <td>
-                        {formatNum(availableRanges.reduce((sum, r) => sum + CLARITY_LIST.reduce((s, clr) => s + (scp[r]?.[clr]?.cts || 0), 0), 0), 2)} / 
-                        {formatNum(availableRanges.reduce((sum, r) => sum + CLARITY_LIST.reduce((s, clr) => s + (scp[r]?.[clr]?.pcs || 0), 0), 0), 0)}
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  );
+                })}
               </div>
             );
           })}
