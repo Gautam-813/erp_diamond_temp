@@ -278,6 +278,67 @@ const ParcelSummaryReport = ({ parcel, tender, state, prices, totals, onUpdate }
         </table>
       </div>
 
+      {/* 2.5 CLARITY BREAKDOWN BY SHAPE & CATEGORY */}
+      <div className="section">
+        <div style={{display: 'flex', gap: 20}}>
+          {['Round', 'Fancy'].map(shape => {
+            const scp = usableData.shapeClarityCategoryProfile?.[shape] || {};
+            const availableRanges = ranges.filter(r => Object.keys(scp).includes(r));
+            
+            if (availableRanges.length === 0) return null;
+
+            return (
+              <div key={shape} style={{flex: 1}}>
+                <div className="section-title">{shape.toUpperCase()} POLISH DETAIL (CLARITY-WISE)</div>
+                <table className="summary-table mini">
+                  <thead>
+                    <tr>
+                      <th>Clarity</th>
+                      {availableRanges.map(r => <th key={r}>{r}<br/><small>(CTS/Pcs)</small></th>)}
+                      <th>Total</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {CLARITY_LIST.map(clr => {
+                      const rowTotalCts = availableRanges.reduce((sum, r) => sum + (scp[r]?.[clr]?.cts || 0), 0);
+                      const rowTotalPcs = availableRanges.reduce((sum, r) => sum + (scp[r]?.[clr]?.pcs || 0), 0);
+                      
+                      if (rowTotalCts === 0) return null;
+
+                      return (
+                        <tr key={clr}>
+                          <td style={{fontWeight: 700}}>{clr}</td>
+                          {availableRanges.map(r => (
+                            <td key={r}>
+                              {formatNum(scp[r]?.[clr]?.cts || 0, 2)} / {formatNum(scp[r]?.[clr]?.pcs || 0, 0)}
+                            </td>
+                          ))}
+                          <td style={{fontWeight: 700, backgroundColor: '#f5f5f5'}}>
+                            {formatNum(rowTotalCts, 2)} / {formatNum(rowTotalPcs, 0)}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                    <tr className="total-row">
+                      <td>TOTAL</td>
+                      {availableRanges.map(r => {
+                        const colTotalCts = CLARITY_LIST.reduce((sum, clr) => sum + (scp[r]?.[clr]?.cts || 0), 0);
+                        const colTotalPcs = CLARITY_LIST.reduce((sum, clr) => sum + (scp[r]?.[clr]?.pcs || 0), 0);
+                        return <td key={r}>{formatNum(colTotalCts, 2)} / {formatNum(colTotalPcs, 0)}</td>;
+                      })}
+                      <td>
+                        {formatNum(availableRanges.reduce((sum, r) => sum + CLARITY_LIST.reduce((s, clr) => s + (scp[r]?.[clr]?.cts || 0), 0), 0), 2)} / 
+                        {formatNum(availableRanges.reduce((sum, r) => sum + CLARITY_LIST.reduce((s, clr) => s + (scp[r]?.[clr]?.pcs || 0), 0), 0), 0)}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
       {/* 3. USABLE vs NON-USABLE */}
       <div className="section">
         <div className="section-title">USABLE vs NON-USABLE</div>
@@ -581,17 +642,23 @@ const ParcelSummaryReport = ({ parcel, tender, state, prices, totals, onUpdate }
           color: #ffffff;
           font-size: 10px;
           font-weight: bold;
-          text-align: left;
+          text-align: center;
           padding: 9px 8px;
           text-transform: uppercase;
           letter-spacing: 0.3px;
           border: 1px solid #cccccc;
+        }
+        .summary-table th small {
+          font-size: 8px;
+          opacity: 0.7;
+          text-transform: none;
         }
         .summary-table td {
           padding: 9px 8px;
           font-size: 11px;
           border: 1px solid #e0e0e0;
           color: #000000;
+          text-align: center;
         }
         .summary-table tr:nth-child(even) {
           background-color: #f5f5f5;

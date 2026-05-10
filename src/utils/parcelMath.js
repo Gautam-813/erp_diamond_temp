@@ -60,7 +60,8 @@ export const calculateParcelTotals = (state, parcel, globalPrices, COLOUR_LIST, 
       usableRough: 0, usablePol: 0, usableVal: 0,
       nonUsableRough: 0, nonUsablePol: 0, nonUsableVal: 0,
       usablePcs,
-      nonUsablePcs
+      nonUsablePcs,
+      shapeClarityCategoryProfile: {} // Added for detailed breakdown
    };
 
    const clarityGroups = {
@@ -160,13 +161,11 @@ export const calculateParcelTotals = (state, parcel, globalPrices, COLOUR_LIST, 
                const grpAvg = isHigh ? avgs[lookupShape].high : avgs[lookupShape].low;
                const pIdx = getPriceIdxByWeight(grpAvg);
 
-               // Use Previous Category Price logic (consistent with PolishTable)
                const usePrevCfg = isRound ? (rCfg.roundUsePrevPrice || {}) : (rCfg.fancyUsePrevPrice || {});
                const usePrev = usePrevCfg[clr];
                const clrIdx = CLARITY_LIST.indexOf(clr);
                const priceClarity = (usePrev && clrIdx > 0) ? CLARITY_LIST[clrIdx - 1] : clr;
 
-               // Case-insensitive shape lookup in globalPrices
                const priceShapeKey = Object.keys(globalPrices || {}).find(k => k.toLowerCase() === lookupShape.toLowerCase()) || lookupShape;
                const price = globalPrices?.[priceShapeKey]?.[pIdx]?.[col]?.[priceClarity] || 0;
                const val = polC * price;
@@ -184,10 +183,6 @@ export const calculateParcelTotals = (state, parcel, globalPrices, COLOUR_LIST, 
 
                if (isHotSize && isHotSize(col, clr)) hotCts += polC;
 
-               // Usable vs Non-Usable logic
-               const usableColours = COLOUR_LIST.slice(0, COLOUR_LIST.indexOf(usableColourMax) + 1);
-               const usableClarities = CLARITY_LIST.slice(0, CLARITY_LIST.indexOf(usableClarityMin) + 1);
-               
                const isUsable = usableColours.includes(col) && usableClarities.includes(clr);
                
                if (isUsable) {
@@ -203,6 +198,14 @@ export const calculateParcelTotals = (state, parcel, globalPrices, COLOUR_LIST, 
                   if (!usableData.nonUsablePcs[col]) usableData.nonUsablePcs[col] = {};
                   usableData.nonUsablePcs[col][clr] = (usableData.nonUsablePcs[col][clr] || 0) + polP;
                }
+
+               // Shape x Clarity x Category breakdown population
+               const scp = usableData.shapeClarityCategoryProfile;
+               if (!scp[lookupShape]) scp[lookupShape] = {};
+               if (!scp[lookupShape][r]) scp[lookupShape][r] = {};
+               if (!scp[lookupShape][r][clr]) scp[lookupShape][r][clr] = { cts: 0, pcs: 0 };
+               scp[lookupShape][r][clr].cts += polC;
+               scp[lookupShape][r][clr].pcs += polP;
             });
          });
       });
