@@ -331,10 +331,7 @@ async def sync_prices_from_excel(
 
 @app.delete("/media/{media_id}")
 def delete_media(media_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
-    media = db.query(models.Media).join(models.Parcel).join(models.Tender).filter(
-        models.Media.id == media_id,
-        models.Tender.owner_id == current_user.id
-    ).first()
+    media = db.query(models.Media).filter(models.Media.id == media_id).first()
     
     if not media:
         raise HTTPException(status_code=404, detail="Media not found or unauthorized")
@@ -503,10 +500,7 @@ async def upload_media(
     db: Session = Depends(get_db), 
     current_user: models.User = Depends(get_current_user)
 ):
-    parcel = db.query(models.Parcel).join(models.Tender).filter(
-        models.Parcel.id == parcel_id, 
-        models.Tender.owner_id == current_user.id
-    ).first()
+    parcel = db.query(models.Parcel).filter(models.Parcel.id == parcel_id).first()
     
     if not parcel:
         raise HTTPException(status_code=404, detail="Parcel not found or unauthorized")
@@ -631,19 +625,22 @@ def debug_database(db: Session = Depends(get_db)):
 frontend_path = os.path.join(os.path.dirname(__file__), "..", "dist")
 
 if os.path.exists(frontend_path):
-    # Mount frontend FIRST
-    app.mount("/", StaticFiles(directory=frontend_path, html=True), name="frontend")
+    try:
+        # Mount frontend
+        app.mount("/", StaticFiles(directory=frontend_path, html=True), name="frontend")
+    except Exception as e:
+        print(f"⚠️ Warning: Could not mount frontend: {e}")
+
+# Catch-all route for React client-side routing
+@app.get("/{full_path:path}")
+async def serve_react_app(full_path: str):
+    if full_path.startswith("api/") or full_path.startswith("auth/"):
+        return FileResponse(os.path.join(frontend_path, "index.html")) # Fallback
     
-    # Catch-all route for React client-side routing
-    @app.get("/{full_path:path}")
-    async def serve_react_app(full_path: str):
-        if full_path.startswith("api/") or full_path.startswith("auth/"):
-            raise HTTPException(status_code=404)
-        
-        index_path = os.path.join(frontend_path, "index.html")
-        if os.path.exists(index_path):
-            return FileResponse(index_path)
-        return {"error": "Frontend build not found. Run 'npm run build'"}
+    index_path = os.path.join(frontend_path, "index.html")
+    if os.path.exists(index_path):
+        return FileResponse(index_path)
+    return {"message": "EF Diamond API is running. Frontend build not found."}
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8000))

@@ -11,6 +11,8 @@ export default defineConfig({
       '/config': 'http://localhost:8000',
       '/tenders': 'http://localhost:8000',
       '/parcels': 'http://localhost:8000',
+      '/static': 'http://localhost:8000',
+      '/media': 'http://localhost:8000',
     }
   },
   build: {
