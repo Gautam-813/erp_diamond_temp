@@ -13,6 +13,17 @@ import pandas as pd
 from typing import List, Dict, Any
 import os
 import shutil
+import cloudinary
+import cloudinary.uploader
+import cloudinary.api
+
+# Cloudinary Configuration
+cloudinary.config(
+  cloud_name = os.getenv("CLOUDINARY_CLOUD_NAME"),
+  api_key = os.getenv("CLOUDINARY_API_KEY"),
+  api_secret = os.getenv("CLOUDINARY_API_SECRET"),
+  secure = True
+)
 
 
 # Create uploads directory if it doesn't exist
@@ -323,19 +334,37 @@ def delete_media(media_id: int, db: Session = Depends(get_db), current_user: mod
     if not media:
         raise HTTPException(status_code=404, detail="Media not found or unauthorized")
     
-    # Delete physical file
-    try:
-        # Convert web path static/filename to local path uploads/filename
-        filename = media.file_path.split("/")[-1]
-        local_path = os.path.join(UPLOAD_DIR, filename)
-        if os.path.exists(local_path):
-            os.remove(local_path)
-    except Exception as e:
-        print(f"Error deleting file: {e}")
+    # Delete from Cloudinary if it's a cloud URL
+    if "cloudinary.com" in media.file_path:
+        try:
+            # Extract public_id from Cloudinary URL
+            # Pattern: .../upload/v1234567/ef_diamond_erp/parcel_26/filename.jpg
+            # We need: ef_diamond_erp/parcel_26/filename
+            parts = media.file_path.split("/")
+            upload_idx = parts.index("upload")
+            # public_id is everything after the version (v1234567) part
+            public_id_with_ext = "/".join(parts[upload_idx+2:])
+            public_id = ".".join(public_id_with_ext.split(".")[:-1])
+            
+            res_type = "image"
+            if media.file_type == "video": res_type = "video"
+            
+            cloudinary.uploader.destroy(public_id, resource_type=res_type)
+        except Exception as e:
+            print(f"Error deleting from Cloudinary: {e}")
+    else:
+        # Fallback for old local files
+        try:
+            filename = media.file_path.split("/")[-1]
+            local_path = os.path.join(UPLOAD_DIR, filename)
+            if os.path.exists(local_path):
+                os.remove(local_path)
+        except Exception as e:
+            print(f"Error deleting local file: {e}")
 
     db.delete(media)
     db.commit()
-    return {"message": "Media deleted"}
+    return {"message": "Media deleted successfully"}
 
 @app.post("/tenders/{tender_id}/share")
 def share_tender(tender_id: int, email: str, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
@@ -477,49 +506,40 @@ async def upload_media(
     if not parcel:
         raise HTTPException(status_code=404, detail="Parcel not found or unauthorized")
     
-    file_ext = file.filename.split(".")[-1]
-    filename = f"parcel_{parcel_id}_{datetime.datetime.now().timestamp()}.{file_ext}"
-    file_path = os.path.join(UPLOAD_DIR, filename)
-    
-    f_type = "image"
-    if file_ext.lower() in ["mp4", "mov", "avi"]: f_type = "video"
-    elif file_ext.lower() == "pdf": f_type = "pdf"
-    
-    with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
-    
-    new_media = models.Media(
-        filename=file.filename,
-        file_type=f_type,
-        file_path=f"/static/{filename}",
-        parcel_id=parcel_id
-    )
-    db.add(new_media)
-    db.commit()
-    db.refresh(new_media)
-    return {
-        "id": new_media.id,
-        "filename": new_media.filename,
-        "file_type": new_media.file_type,
-        "file_path": new_media.file_path
-    }
+    try:
+        file_ext = file.filename.split(".")[-1]
+        f_type = "image"
+        if file_ext.lower() in ["mp4", "mov", "avi"]: f_type = "video"
+        elif file_ext.lower() == "pdf": f_type = "pdf"
 
-@app.delete("/media/{media_id}")
-def delete_media(media_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
-    media = db.query(models.Media).join(models.Parcel).join(models.Tender).filter(
-        models.Media.id == media_id,
-        models.Tender.owner_id == current_user.id
-    ).first()
-    
-    if not media:
-        raise HTTPException(status_code=404, detail="Media not found or unauthorized")
-    
-    if os.path.exists(media.file_path.lstrip("/").replace("static/", "uploads/")):
-        os.remove(media.file_path.lstrip("/").replace("static/", "uploads/"))
-    
-    db.delete(media)
-    db.commit()
-    return {"status": "success", "message": "Media deleted successfully"}
+        # Upload to Cloudinary
+        upload_result = cloudinary.uploader.upload(
+            file.file,
+            resource_type="auto",
+            folder=f"ef_diamond_erp/parcel_{parcel_id}"
+        )
+        
+        file_url = upload_result.get("secure_url")
+        
+        new_media = models.Media(
+            filename=file.filename,
+            file_type=f_type,
+            file_path=file_url,
+            parcel_id=parcel_id
+        )
+        db.add(new_media)
+        db.commit()
+        db.refresh(new_media)
+        return {
+            "id": new_media.id,
+            "filename": new_media.filename,
+            "file_type": new_media.file_type,
+            "file_path": new_media.file_path
+        }
+    except Exception as e:
+        print(f"Cloudinary Upload Error: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to upload to cloud: {str(e)}")
+
 
 # --- DEBUG ENDPOINT (Remove in production!) ---
 @app.get("/api/debug-db")
