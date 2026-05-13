@@ -886,19 +886,49 @@ const PolishTable = ({ range, state, prices, onUpdateConfig, onGlobalUpdate, siz
       return totalPolP > 0 ? totalPolC / totalPolP : 0;
    };
 
-   const roundHighAvg = calcGroupAvgSize('Round', clarityGroups.high);
-   // Check if all low-clarity multipliers for Round are ≤ 1
+   // ROUND Logic: 3-Case Sizing
+   const roundHighMults = clarityGroups.high.map(c => parseFloat(roundMultiplierByClarity[c]) || 1);
+   const roundAnyHighGT1 = roundHighMults.some(m => m > 1);
    const roundLowMults = clarityGroups.low.map(c => parseFloat(roundMultiplierByClarity[c]) || 1);
-   const roundAllLowMultsLE1 = roundLowMults.every(m => m <= 1);
-   // If all low multipliers ≤ 1, use high avg. Else calculate separately
-   const roundLowAvg = roundAllLowMultsLE1 ? roundHighAvg : calcGroupAvgSize('Round', clarityGroups.low);
+   const roundAnyLowGT1 = roundLowMults.some(m => m > 1);
 
-   const fancyHighAvg = calcGroupAvgSize('Fancy', clarityGroups.high);
-   // Check if all low-clarity multipliers for Fancy are ≤ 1
+   let roundHighAvg, roundLowAvg;
+   if (roundAnyHighGT1 && roundAnyLowGT1) {
+      // Case 3: Both > 1, share total average of all stones
+      const totalAvg = calcGroupAvgSize('Round', [...clarityGroups.high, ...clarityGroups.low]);
+      roundHighAvg = totalAvg;
+      roundLowAvg = totalAvg;
+   } else if (roundAnyLowGT1) {
+      // Case 2: Only Low > 1, split independently
+      roundHighAvg = calcGroupAvgSize('Round', clarityGroups.high);
+      roundLowAvg = calcGroupAvgSize('Round', clarityGroups.low);
+   } else {
+      // Case 1: Low <= 1, borrow high average
+      roundHighAvg = calcGroupAvgSize('Round', clarityGroups.high);
+      roundLowAvg = roundHighAvg;
+   }
+
+   // FANCY Logic: 3-Case Sizing
+   const fancyHighMults = clarityGroups.high.map(c => parseFloat(fancyMultiplierByClarity[c]) || 1);
+   const fancyAnyHighGT1 = fancyHighMults.some(m => m > 1);
    const fancyLowMults = clarityGroups.low.map(c => parseFloat(fancyMultiplierByClarity[c]) || 1);
-   const fancyAllLowMultsLE1 = fancyLowMults.every(m => m <= 1);
-   // If all low multipliers ≤ 1, use high avg. Else calculate separately
-   const fancyLowAvg = fancyAllLowMultsLE1 ? fancyHighAvg : calcGroupAvgSize('Fancy', clarityGroups.low);
+   const fancyAnyLowGT1 = fancyLowMults.some(m => m > 1);
+
+   let fancyHighAvg, fancyLowAvg;
+   if (fancyAnyHighGT1 && fancyAnyLowGT1) {
+      // Case 3: Both > 1, share total average of all stones
+      const totalAvg = calcGroupAvgSize('Fancy', [...clarityGroups.high, ...clarityGroups.low]);
+      fancyHighAvg = totalAvg;
+      fancyLowAvg = totalAvg;
+   } else if (fancyAnyLowGT1) {
+      // Case 2: Only Low > 1, split independently
+      fancyHighAvg = calcGroupAvgSize('Fancy', clarityGroups.high);
+      fancyLowAvg = calcGroupAvgSize('Fancy', clarityGroups.low);
+   } else {
+      // Case 1: Low <= 1, borrow high average
+      fancyHighAvg = calcGroupAvgSize('Fancy', clarityGroups.high);
+      fancyLowAvg = fancyHighAvg;
+   }
 
    const roundAvg = (roundHighAvg + roundLowAvg) / 2;
    const polMM = getMMByWeight(roundAvg, sizeChart);

@@ -39,20 +39,27 @@ const TenderComparisonReport = ({ tenders, onBack }) => {
     };
   });
 
+  const isSqueezed = comparisonData.length > 5;
+
   const handleDownloadPDF = () => {
     const element = document.querySelector('.tender-comparison-report');
     const opt = {
-      margin: 0.5,
+      margin: 0.1,
       filename: `tender_comparison_${new Date().toISOString().split('T')[0]}.pdf`,
       image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { scale: 2, useCORS: true },
-      jsPDF: { unit: 'in', format: 'a4', orientation: 'landscape' }
+      html2canvas: { 
+        scale: 1.5, 
+        useCORS: true,
+        logging: false,
+        windowWidth: 1600
+      },
+      jsPDF: { unit: 'in', format: 'a4', orientation: 'landscape', compress: true }
     };
     html2pdf().set(opt).from(element).save();
   };
 
   return (
-    <div className="tender-comparison-report">
+    <div className={`tender-comparison-report ${isSqueezed ? 'squeezed-mode' : ''}`}>
       <div className="report-header">
         <div className="title-section">
           <h1>TENDER COMPARISON REPORT</h1>
@@ -70,7 +77,8 @@ const TenderComparisonReport = ({ tenders, onBack }) => {
 
       {/* Overview Metrics Table */}
       <div className="section-title">OVERVIEW — KEY METRICS</div>
-      <table className="comparison-table">
+      <div className="table-responsive">
+        <table className="comparison-table">
         <thead>
           <tr>
             <th>Metric</th>
@@ -123,7 +131,8 @@ const TenderComparisonReport = ({ tenders, onBack }) => {
             ))}
           </tr>
         </tbody>
-      </table>
+        </table>
+      </div>
 
       <style jsx>{`
         .tender-comparison-report {
@@ -170,21 +179,41 @@ const TenderComparisonReport = ({ tenders, onBack }) => {
           border-bottom: 1px solid var(--border);
           padding-bottom: 8px;
         }
+        .squeezed-mode .section-title {
+          font-size: 11px;
+          margin: 20px 0 10px 0;
+        }
+        .table-responsive {
+          width: 100%;
+          overflow-x: auto;
+        }
         .comparison-table {
           width: 100%;
           border-collapse: collapse;
           margin-bottom: 40px;
           background: var(--card);
+          font-size: 11px;
+        }
+        .squeezed-mode .comparison-table {
+          table-layout: fixed;
+          font-size: 9.5px;
         }
         .comparison-table th {
           background: var(--bg2);
           color: var(--text2);
           padding: 12px;
-          text-align: left;
+          text-align: center;
           font-weight: 700;
           border: 1px solid var(--border);
           font-size: 11px;
           text-transform: uppercase;
+          vertical-align: middle;
+        }
+        .squeezed-mode .comparison-table th {
+          padding: 6px 4px;
+          font-size: 9px;
+          word-break: break-all;
+          overflow: hidden;
         }
         .comparison-table td {
           padding: 12px;
@@ -192,10 +221,23 @@ const TenderComparisonReport = ({ tenders, onBack }) => {
           color: var(--text);
           text-align: center;
         }
+        .squeezed-mode .comparison-table td {
+          padding: 6px 4px;
+        }
         .comparison-table td:first-child {
           font-weight: 600;
           text-align: left;
-          color: var(--blue);
+          color: #000000;
+          background: var(--bg2);
+          min-width: 160px;
+        }
+        .squeezed-mode .comparison-table td:first-child {
+          width: 120px;
+          min-width: 120px;
+          color: #000000;
+        }
+        .comparison-table th:first-child {
+          color: #000000;
           background: var(--bg2);
         }
         .btn {

@@ -192,11 +192,17 @@ const ParcelComparisonReport = ({ parcels, tender, prices, onBack }) => {
   const handleDownloadPDF = () => {
     const element = document.querySelector('.comparison-report');
     const opt = {
-      margin: 0.2,
+      margin: 0.1,
       filename: `parcel_comparison_${tender.name.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`,
       image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { scale: 2, useCORS: true },
-      jsPDF: { unit: 'in', format: 'a4', orientation: 'landscape' }
+      html2canvas: { 
+        scale: 1.5, 
+        useCORS: true,
+        logging: false,
+        letterRendering: true,
+        windowWidth: 1600 
+      },
+      jsPDF: { unit: 'in', format: 'a4', orientation: 'landscape', compress: true }
     };
     html2pdf().set(opt).from(element).save();
   };
@@ -252,8 +258,10 @@ const ParcelComparisonReport = ({ parcels, tender, prices, onBack }) => {
     );
   }
 
+  const isSqueezed = comparisonData.length > 5;
+
   return (
-    <div className="comparison-report">
+    <div className={`comparison-report ${isSqueezed ? 'squeezed-mode' : ''}`}>
       <div className="report-header">
         <div className="title-section">
           <h1>PARCEL COMPARISON REPORT</h1>
@@ -267,7 +275,8 @@ const ParcelComparisonReport = ({ parcels, tender, prices, onBack }) => {
 
       <div className="section">
         <div className="section-title">OVERVIEW — ROUGH & POLISH KEY METRICS</div>
-        <table className="comparison-table">
+        <div className="table-responsive">
+          <table className="comparison-table">
           <thead>
             <tr>
               <th>Metric</th>
@@ -286,12 +295,14 @@ const ParcelComparisonReport = ({ parcels, tender, prices, onBack }) => {
             <tr><td>Final Bid $/Rough Ct</td>{comparisonData.map(data => <td key={data.id} style={{fontWeight:700}}>${formatNum(data.finalBid / data.roughCts, 2)}</td>)}</tr>
             <tr><td>Total Bid ($)</td>{comparisonData.map(data => <td key={data.id} style={{fontWeight:700}}>${formatNum(data.finalBid, 0)}</td>)}</tr>
           </tbody>
-        </table>
+          </table>
+        </div>
       </div>
 
       <div className="section">
         <div className="section-title">COLOUR PROFILE COMPARISON (% of pol cts)</div>
-        <table className="comparison-table">
+        <div className="table-responsive">
+          <table className="comparison-table">
           <thead>
             <tr>
               <th>Colour</th>
@@ -310,12 +321,14 @@ const ParcelComparisonReport = ({ parcels, tender, prices, onBack }) => {
             ))}
             <tr className="total-row"><td>TOTAL</td>{comparisonData.map(data => <td key={data.id}>100.0%</td>)}</tr>
           </tbody>
-        </table>
+          </table>
+        </div>
       </div>
 
       <div className="section">
         <div className="section-title">CLARITY PROFILE COMPARISON (% of pol cts)</div>
-        <table className="comparison-table">
+        <div className="table-responsive">
+          <table className="comparison-table">
           <thead>
             <tr>
               <th>Clarity</th>
@@ -334,12 +347,14 @@ const ParcelComparisonReport = ({ parcels, tender, prices, onBack }) => {
             ))}
             <tr className="total-row"><td>TOTAL</td>{comparisonData.map(data => <td key={data.id}>100.0%</td>)}</tr>
           </tbody>
-        </table>
+          </table>
+        </div>
       </div>
 
       <div className="section">
         <div className="section-title">USABLE vs NON-USABLE COMPARISON</div>
-        <table className="comparison-table">
+        <div className="table-responsive">
+          <table className="comparison-table">
           <thead>
             <tr>
               <th>Category</th>
@@ -356,12 +371,14 @@ const ParcelComparisonReport = ({ parcels, tender, prices, onBack }) => {
             <tr><td>Non-Usable Pol $/Rough Ct</td>{comparisonData.map(data => <td key={data.id}>${data.roughCts > 0 ? (data.nonUsableVal/data.roughCts).toFixed(2) : 0}</td>)}</tr>
             <tr><td>Non-Usable Pol Value</td>{comparisonData.map(data => <td key={data.id}>${formatNum(data.nonUsableVal, 0)}</td>)}</tr>
           </tbody>
-        </table>
+          </table>
+        </div>
       </div>
 
       <div className="section">
         <div className="section-title">FLUORESCENCE COMPARISON (rough cts basis)</div>
-        <table className="comparison-table">
+        <div className="table-responsive">
+          <table className="comparison-table">
           <thead>
             <tr>
               <th>Fluorescence</th>
@@ -374,12 +391,14 @@ const ParcelComparisonReport = ({ parcels, tender, prices, onBack }) => {
             <tr><td>Med / Strong (cts)</td>{comparisonData.map(data => <td key={data.id}>{formatNum(data.roughCts * (parseFloat(data.fluo["Med/Stg"])/100), 2)}</td>)}</tr>
             <tr><td>Med / Strong (%)</td>{comparisonData.map(data => <td key={data.id}>{formatNum(parseFloat(data.fluo["Med/Stg"]), 1)}%</td>)}</tr>
           </tbody>
-        </table>
+          </table>
+        </div>
       </div>
 
       <div className="section">
         <div className="section-title">SHAPE & POLISH SIZE COMPARISON</div>
-        <table className="comparison-table">
+        <div className="table-responsive">
+          <table className="comparison-table">
           <thead>
             <tr><th>Article</th><th>Shapes</th><th>Polish Size</th><th>Pol Cts</th><th>Pol Pcs</th></tr>
           </thead>
@@ -394,7 +413,8 @@ const ParcelComparisonReport = ({ parcels, tender, prices, onBack }) => {
               </tr>
             ))}
           </tbody>
-        </table>
+          </table>
+        </div>
       </div>
 
       <style jsx>{`
@@ -438,21 +458,41 @@ const ParcelComparisonReport = ({ parcels, tender, prices, onBack }) => {
           letter-spacing: 0.5px;
           margin-bottom: 12px;
         }
+        .squeezed-mode .section-title {
+          font-size: 10px;
+          margin-bottom: 8px;
+        }
+        .table-responsive {
+          width: 100%;
+          overflow-x: auto;
+          background: #ffffff;
+        }
         .comparison-table {
           width: 100%;
           border-collapse: collapse;
-          margin-bottom: 20px;
           font-size: 11px;
+        }
+        .squeezed-mode .comparison-table {
+          table-layout: fixed;
+          font-size: 9.5px;
         }
         .comparison-table th {
           background: #000000;
           color: #ffffff;
           font-size: 10px;
           font-weight: bold;
-          text-align: left;
+          text-align: center;
           padding: 9px 8px;
           text-transform: uppercase;
-          border: 1px solid #cccccc;
+          border: 1px solid #333333;
+          line-height: 1.2;
+          vertical-align: middle;
+        }
+        .squeezed-mode .comparison-table th {
+          font-size: 9px;
+          padding: 6px 4px;
+          word-break: break-all; /* Force break even in middle of words */
+          overflow: hidden;
         }
         .comparison-table td {
           padding: 9px 8px;
@@ -460,16 +500,29 @@ const ParcelComparisonReport = ({ parcels, tender, prices, onBack }) => {
           text-align: center;
           color: #000000;
         }
+        .squeezed-mode .comparison-table td {
+          padding: 6px 4px;
+          word-break: break-all;
+          overflow: hidden;
+        }
         .comparison-table tr:nth-child(even) {
-          background-color: #f5f5f5;
+          background-color: #f9f9f9;
         }
         .comparison-table th:first-child, .comparison-table td:first-child {
           text-align: left;
           min-width: 160px;
           font-weight: bold;
+          background: #f5f5f5;
+          color: #000000; /* Force black text for the first column */
+        }
+        .squeezed-mode .comparison-table th:first-child, 
+        .squeezed-mode .comparison-table td:first-child {
+          width: 120px;
+          min-width: 120px;
+          color: #000000;
         }
         .total-row {
-          background-color: #f5f5f5 !important;
+          background-color: #f0f0f0 !important;
           font-weight: bold;
         }
         @media print {

@@ -657,19 +657,19 @@ const ParcelSummaryReport = ({ parcel, tender, state, prices, totals, onUpdate }
         }
         .stat-card {
           text-align: center;
-          padding: 8px;
+          padding: 6px 4px;
           background: #ffffff;
         }
         .stat-card label {
           display: block;
-          font-size: 9px;
+          font-size: 8px;
           text-transform: uppercase;
           font-weight: bold;
           color: #666666;
-          margin-bottom: 4px;
+          margin-bottom: 2px;
         }
         .stat-card .val {
-          font-size: 13px;
+          font-size: 11px;
           font-weight: bold;
           color: #000000;
         }
@@ -680,36 +680,42 @@ const ParcelSummaryReport = ({ parcel, tender, state, prices, totals, onUpdate }
           color: #ffffff;
         }
         .section-title {
-          font-size: 11px;
+          font-size: 10px;
           font-weight: bold;
           color: #666666;
           text-transform: uppercase;
           letter-spacing: 0.5px;
-          margin-bottom: 12px;
-          padding-top: 10px;
+          margin-bottom: 8px;
+          padding-top: 5px;
           border-bottom: none;
         }
         .section {
           page-break-inside: avoid;
           break-inside: avoid;
-          margin-bottom: 30px;
+          margin-bottom: 20px;
         }
         .summary-table {
           width: 100%;
           border-collapse: collapse;
-          margin-bottom: 20px;
-          font-size: 11px;
+          margin-bottom: 15px;
+          font-size: 10px;
         }
         .summary-table th {
           background: #000000;
           color: #ffffff;
-          font-size: 10px;
+          font-size: 9px;
           font-weight: bold;
           text-align: center;
-          padding: 9px 8px;
+          padding: 6px 4px;
           text-transform: uppercase;
           letter-spacing: 0.3px;
-          border: 1px solid #cccccc;
+          border: 1px solid #333333;
+        }
+        .summary-table th:first-child, .summary-table td:first-child {
+          text-align: left;
+          background: #f5f5f5;
+          color: #000000;
+          font-weight: bold;
         }
         .summary-table th small {
           font-size: 8px;
@@ -717,8 +723,8 @@ const ParcelSummaryReport = ({ parcel, tender, state, prices, totals, onUpdate }
           text-transform: none;
         }
         .summary-table td {
-          padding: 9px 8px;
-          font-size: 11px;
+          padding: 6px 4px;
+          font-size: 10px;
           border: 1px solid #e0e0e0;
           color: #000000;
           text-align: center;
