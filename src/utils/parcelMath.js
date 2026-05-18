@@ -28,14 +28,14 @@ export const getPriceIdxByWeight = (w) => {
 };
 
 
-export const calculateParcelTotals = (state, parcel, globalPrices, COLOUR_LIST, CLARITY_LIST, isHotSize, usableColourMax = 'H', usableClarityMin = 'VS1') => {
+export const calculateParcelTotals = (state, parcel, globalPrices, COLOUR_LIST, CLARITY_LIST, isHotSize, usableColourMax = 'G', usableClarityMin = 'VS1', usableFluoMax = 'None-Faint') => {
    if (!state || !state.table) return null;
 
    let totalPolCts = 0;
    let totalPolPcs = 0;
    let totalValue = 0;
    let hotCts = 0;
-   
+
    const rangeWise = {};
    const colorProfile = {};
    const clarityProfile = {};
@@ -45,32 +45,48 @@ export const calculateParcelTotals = (state, parcel, globalPrices, COLOUR_LIST, 
    // Dynamic usable data structures based on thresholds
    const usableColours = COLOUR_LIST.slice(0, COLOUR_LIST.indexOf(usableColourMax) + 1);
    const usableClarities = CLARITY_LIST.slice(0, CLARITY_LIST.indexOf(usableClarityMin) + 1);
-   
+
+   // Fluorescence: calculate percentages from state.fluo
+   const fluoNone = parseFloat(state.fluo?.['None']) || 0;
+   const fluoFnt = parseFloat(state.fluo?.['Fnt']) || 0;
+   const fluoMedStg = parseFloat(state.fluo?.['Med/Stg']) || 0;
+   const fluoUsablePct = (usableFluoMax === 'None-Faint') ? (fluoNone + fluoFnt) : 100;
+   const fluoNonUsablePct = (usableFluoMax === 'None-Faint') ? fluoMedStg : 0;
+
    const usablePcs = {};
    const nonUsablePcs = {};
-   
-   // Initialize usablePcs for all colours that could be usable
-   usableColours.forEach(col => {
-      usablePcs[col] = {};
-      usableClarities.forEach(clr => {
-         usablePcs[col][clr] = 0;
-      });
-   });
-   
-   // Initialize nonUsablePcs for all colours that could be non-usable
-   COLOUR_LIST.filter(c => !usableColours.includes(c)).forEach(col => {
-      nonUsablePcs[col] = {};
-      CLARITY_LIST.forEach(clr => {
-         nonUsablePcs[col][clr] = 0;
-      });
-   });
+   const nonUsableFluoPcs = {};
+
+    COLOUR_LIST.forEach(col => {
+       usablePcs[col] = {};
+       usableClarities.forEach(clr => {
+          usablePcs[col][clr] = 0;
+       });
+    });
+
+    COLOUR_LIST.forEach(col => {
+       nonUsablePcs[col] = {};
+       CLARITY_LIST.forEach(clr => {
+          nonUsablePcs[col][clr] = 0;
+       });
+    });
+
+   // Initialize nonUsableFluoPcs for all colours
+    COLOUR_LIST.forEach(col => {
+       nonUsableFluoPcs[col] = {};
+       usableClarities.forEach(clr => {
+          nonUsableFluoPcs[col][clr] = 0;
+       });
+    });
 
    const usableData = {
       usableRough: 0, usablePol: 0, usableVal: 0,
       nonUsableRough: 0, nonUsablePol: 0, nonUsableVal: 0,
+      nonUsableFluoRough: 0, nonUsableFluoPol: 0, nonUsableFluoVal: 0,
       usablePcs,
       nonUsablePcs,
-      shapeClarityCategoryProfile: {} // Added for detailed breakdown
+      nonUsableFluoPcs,
+      shapeClarityCategoryProfile: {}
    };
 
    const clarityGroups = {
@@ -193,13 +209,32 @@ export const calculateParcelTotals = (state, parcel, globalPrices, COLOUR_LIST, 
                if (isHotSize && isHotSize(col, clr)) hotCts += polC;
 
                const isUsable = usableColours.includes(col) && usableClarities.includes(clr);
-               
+
                if (isUsable) {
-                  usableData.usableRough += roughC;
-                  usableData.usablePol += polC;
-                  usableData.usableVal += val;
+                  const usableRough = roughC;
+                  const usablePol = polC;
+                  const usableVal = val;
+                  const usablePolPcs = polP;
+
+                  // Apply fluorescence split: usable vs non-usable (fluorescence)
+                  const fluoFraction = fluoUsablePct / 100;
+                  const nonUsableFluoRough = roughC - (roughC * fluoFraction);
+                  const nonUsableFluoPol = polC - (polC * fluoFraction);
+                  const nonUsableFluoVal = val - (val * fluoFraction);
+                  const nonUsableFluoPolPcs = polP - Math.round(polP * fluoFraction);
+
+                  usableData.usableRough += roughC * fluoFraction;
+                  usableData.usablePol += polC * fluoFraction;
+                  usableData.usableVal += val * fluoFraction;
                   if (!usableData.usablePcs[col]) usableData.usablePcs[col] = {};
-                  usableData.usablePcs[col][clr] = (usableData.usablePcs[col][clr] || 0) + polP;
+                  usableData.usablePcs[col][clr] = (usableData.usablePcs[col][clr] || 0) + Math.round(polP * fluoFraction);
+
+                  // Non-usable due to fluorescence (within usable colour+clarity)
+                  usableData.nonUsableFluoRough += nonUsableFluoRough;
+                  usableData.nonUsableFluoPol += nonUsableFluoPol;
+                  usableData.nonUsableFluoVal += nonUsableFluoVal;
+                  if (!usableData.nonUsableFluoPcs[col]) usableData.nonUsableFluoPcs[col] = {};
+                  usableData.nonUsableFluoPcs[col][clr] = (usableData.nonUsableFluoPcs[col][clr] || 0) + nonUsableFluoPolPcs;
                } else {
                   usableData.nonUsableRough += roughC;
                   usableData.nonUsablePol += polC;
