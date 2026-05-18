@@ -57,8 +57,9 @@ const ParcelSummaryReport = ({ parcel, tender, state, prices, totals, onUpdate }
   if (!state || !state.table || !totals) return <div className="p-20 text-center">No calculation data available for this parcel.</div>;
 
   const [localState, setLocalState] = useState({
-    usableColourMax: state.usableColourMax || 'H',
-    usableClarityMin: state.usableClarityMin || 'VS1'
+    usableColourMax: state.usableColourMax || 'G',
+    usableClarityMin: state.usableClarityMin || 'VS1',
+    usableFluoMax: state.usableFluoMax || 'None-Faint'
   });
 
   const handleUsableChange = (key, value) => {
@@ -77,10 +78,14 @@ const ParcelSummaryReport = ({ parcel, tender, state, prices, totals, onUpdate }
     if (state.usableClarityMin && state.usableClarityMin !== localState.usableClarityMin) {
       setLocalState(s => ({ ...s, usableClarityMin: state.usableClarityMin }));
     }
-  }, [state.usableColourMax, state.usableClarityMin]);
+    if (state.usableFluoMax && state.usableFluoMax !== localState.usableFluoMax) {
+      setLocalState(s => ({ ...s, usableFluoMax: state.usableFluoMax }));
+    }
+  }, [state.usableColourMax, state.usableClarityMin, state.usableFluoMax]);
 
   const usableColourOptions = ['DEF', 'G', 'H', 'I', 'J', 'K'];
   const usableClarityOptions = ['VVS', 'VS1', 'VS2', 'SI1'];
+  const usableFluoOptions = ['None-Faint', 'Med-Strng'];
 
   // Use the pre-calculated totals from Dashboard.jsx for consistency
   const { 
@@ -200,8 +205,8 @@ const ParcelSummaryReport = ({ parcel, tender, state, prices, totals, onUpdate }
       <div style={{display: 'flex', gap: 20, marginTop: 20, marginBottom: 20, padding: 15, background: '#f5f5f5', border: '1px solid #cccccc', borderRadius: 4}}>
         <div>
           <div style={{fontSize: 11, fontWeight: 700, marginBottom: 5}}>USABLE COLOUR (MAX)</div>
-          <select 
-            value={localState.usableColourMax} 
+          <select
+            value={localState.usableColourMax}
             onChange={e => handleUsableChange('usableColourMax', e.target.value)}
             style={{padding: '6px 10px', borderRadius: 4, border: '1px solid #cccccc', background: '#ffffff', color: '#000000', fontSize: 11}}
           >
@@ -210,12 +215,22 @@ const ParcelSummaryReport = ({ parcel, tender, state, prices, totals, onUpdate }
         </div>
         <div>
           <div style={{fontSize: 11, fontWeight: 700, marginBottom: 5}}>USABLE CLARITY (MIN)</div>
-          <select 
-            value={localState.usableClarityMin} 
+          <select
+            value={localState.usableClarityMin}
             onChange={e => handleUsableChange('usableClarityMin', e.target.value)}
             style={{padding: '6px 10px', borderRadius: 4, border: '1px solid #cccccc', background: '#ffffff', color: '#000000', fontSize: 11}}
           >
             {usableClarityOptions.map(c => <option key={c} value={c}>{c}</option>)}
+          </select>
+        </div>
+        <div>
+          <div style={{fontSize: 11, fontWeight: 700, marginBottom: 5}}>USABLE FLUORESCENCE (MAX)</div>
+          <select
+            value={localState.usableFluoMax}
+            onChange={e => handleUsableChange('usableFluoMax', e.target.value)}
+            style={{padding: '6px 10px', borderRadius: 4, border: '1px solid #cccccc', background: '#ffffff', color: '#000000', fontSize: 11}}
+          >
+            {usableFluoOptions.map(c => <option key={c} value={c}>{c}</option>)}
           </select>
         </div>
         <div style={{flex: 1, fontSize: 11, opacity: 0.6, display: 'flex', alignItems: 'flex-end'}}>
@@ -406,7 +421,7 @@ const ParcelSummaryReport = ({ parcel, tender, state, prices, totals, onUpdate }
       <div className="section">
         <div className="section-title">USABLE vs NON-USABLE</div>
         <div className="info-banner">
-          <b>Usable:</b> {COLOUR_LIST[0]} to {localState.usableColourMax} / {CLARITY_LIST[0]} to {localState.usableClarityMin}. <b>Non-Usable:</b> {COLOUR_LIST[COLOUR_LIST.indexOf(localState.usableColourMax)+1]} to {COLOUR_LIST[5]} / {CLARITY_LIST[CLARITY_LIST.indexOf(localState.usableClarityMin)+1]} to {CLARITY_LIST[CLARITY_LIST.length-1]}.
+          <b>Usable:</b> {COLOUR_LIST[0]} to {localState.usableColourMax} / {CLARITY_LIST[0]} to {localState.usableClarityMin} / {localState.usableFluoMax}. <b>Non-Usable (Colour/Clarity):</b> {COLOUR_LIST[COLOUR_LIST.indexOf(localState.usableColourMax)+1]} to {COLOUR_LIST[5]} / {CLARITY_LIST[CLARITY_LIST.indexOf(localState.usableClarityMin)+1]} to {CLARITY_LIST[CLARITY_LIST.length-1]}. <b>Non-Usable (Fluorescence):</b> Within usable colour+clarity, excluded by {localState.usableFluoMax}.
         </div>
         <table className="summary-table">
           <thead>
@@ -422,7 +437,7 @@ const ParcelSummaryReport = ({ parcel, tender, state, prices, totals, onUpdate }
           </thead>
           <tbody>
             <tr>
-              <td style={{fontWeight:700}}>Usable ({COLOUR_LIST[0]} to {localState.usableColourMax} / {CLARITY_LIST[0]} to {localState.usableClarityMin})</td>
+              <td style={{fontWeight:700}}>Usable (Colour/Clarity/Fluoro)</td>
               <td>{formatNum(usableData.usableRough, 2)}</td>
               <td>{formatNum(usableData.usablePol, 2)}</td>
               <td>${formatNum(usableData.usableVal, 0)}</td>
@@ -431,7 +446,16 @@ const ParcelSummaryReport = ({ parcel, tender, state, prices, totals, onUpdate }
               <td>{totalPolVal > 0 ? ((usableData.usableVal / totalPolVal) * 100).toFixed(1) : 0}%</td>
             </tr>
             <tr>
-              <td style={{fontWeight:700}}>Non-Usable ({COLOUR_LIST[COLOUR_LIST.indexOf(localState.usableColourMax)+1]} to {COLOUR_LIST[5]} / {CLARITY_LIST[CLARITY_LIST.indexOf(localState.usableClarityMin)+1]} to {CLARITY_LIST[CLARITY_LIST.length-1]})</td>
+              <td style={{fontWeight:700}}>Non-Usable (Fluorescence) — within usable Colour/Clarity</td>
+              <td>{formatNum(usableData.nonUsableFluoRough, 2)}</td>
+              <td>{formatNum(usableData.nonUsableFluoPol, 2)}</td>
+              <td>${formatNum(usableData.nonUsableFluoVal, 0)}</td>
+              <td>${usableData.nonUsableFluoRough > 0 ? (usableData.nonUsableFluoVal / usableData.nonUsableFluoRough).toFixed(2) : 0}</td>
+              <td>{totalPolCts > 0 ? ((usableData.nonUsableFluoPol / totalPolCts) * 100).toFixed(1) : 0}%</td>
+              <td>{totalPolVal > 0 ? ((usableData.nonUsableFluoVal / totalPolVal) * 100).toFixed(1) : 0}%</td>
+            </tr>
+            <tr>
+              <td style={{fontWeight:700}}>Non-Usable (Colour/Clarity)</td>
               <td>{formatNum(usableData.nonUsableRough, 2)}</td>
               <td>{formatNum(usableData.nonUsablePol, 2)}</td>
               <td>${formatNum(usableData.nonUsableVal, 0)}</td>
@@ -452,12 +476,12 @@ const ParcelSummaryReport = ({ parcel, tender, state, prices, totals, onUpdate }
         </table>
       </div>
 
-      {/* 4. USABLE & NON-USABLE DETAIL (PCS) */}
+{/* 4. USABLE & NON-USABLE DETAIL (PCS) */}
       {(() => {
          const usableColours = usableColourOptions.slice(0, usableColourOptions.indexOf(localState.usableColourMax) + 1);
          const usableClarities = usableClarityOptions.slice(0, usableClarityOptions.indexOf(localState.usableClarityMin) + 1);
          const nonUsableColours = usableColourOptions.slice(usableColourOptions.indexOf(localState.usableColourMax) + 1);
-         
+
          return (
       <div className="section">
         <div style={{display: 'flex', gap: 20}}>
@@ -495,10 +519,46 @@ const ParcelSummaryReport = ({ parcel, tender, state, prices, totals, onUpdate }
                 })()}
               </tbody>
             </table>
-          </div>
+           </div>
 
-          <div style={{flex: 1}}>
-            <div className="section-title">NON-USABLE DETAIL (PCS)</div>
+           <div style={{flex: 1}}>
+             <div className="section-title">NON-USABLE DETAIL (FLUORESCENCE) — within usable Colour/Clarity</div>
+            <table className="summary-table mini" style={{maxWidth: 300}}>
+              <thead>
+                <tr><th>Color</th>{usableClarities.map(c => <th key={c}>{c}</th>)}<th>Total</th><th>%</th></tr>
+              </thead>
+              <tbody>
+                {(() => {
+                  const { nonUsableFluoPcs } = usableData;
+                  const totalFluoNonUsable = usableColours.reduce((sum, col) => {
+                     return sum + usableClarities.reduce((s, clr) => s + (nonUsableFluoPcs[col]?.[clr] || 0), 0);
+                  }, 0);
+                  return usableColours.length > 0 ? usableColours.map(col => {
+                    const rowTotal = usableClarities.reduce((s, clr) => s + (nonUsableFluoPcs[col]?.[clr] || 0), 0);
+                    const pct = totalFluoNonUsable > 0 ? ((rowTotal / totalFluoNonUsable) * 100).toFixed(1) : 0;
+                    return (
+                      <tr key={col}>
+                        <td>{col}</td>
+                        {usableClarities.map(clr => <td key={clr}>{nonUsableFluoPcs[col]?.[clr] || 0}</td>)}
+                        <td>{rowTotal}</td>
+                        <td>{pct}%</td>
+                      </tr>
+                    );
+                  }).concat(
+                    <tr className="total-row" key="total">
+                      <td>TOTAL</td>
+                      {usableClarities.map(clr => <td key={clr}>{usableColours.reduce((s, c) => s + (nonUsableFluoPcs[c]?.[clr] || 0), 0)}</td>)}
+                      <td>{usableColours.reduce((sum, col) => sum + usableClarities.reduce((s, clr) => s + (nonUsableFluoPcs[col]?.[clr] || 0), 0), 0)}</td>
+                      <td>100.0%</td>
+                    </tr>
+                  ) : <tr><td colSpan={usableClarities.length + 3}>No data</td></tr>;
+                })()}
+              </tbody>
+            </table>
+           </div>
+
+           <div style={{flex: 1}}>
+             <div className="section-title">NON-USABLE DETAIL (COLOUR/CLARITY)</div>
             <table className="summary-table mini" style={{maxWidth: 400}}>
               <thead>
                 <tr><th>Color</th>{usableClarityOptions.slice(usableClarityOptions.indexOf(localState.usableClarityMin) + 1).map(c => <th key={c}>{c}</th>)}<th>Total</th><th>%</th></tr>
